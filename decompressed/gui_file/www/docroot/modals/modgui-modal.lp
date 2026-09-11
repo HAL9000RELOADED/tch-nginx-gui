@@ -306,7 +306,18 @@ if ngx.req.get_method() == "POST" then
                 return sendcmd("checkver")
         end
         if action == "getVendor" then
-                ngx.print(call_popen(untaint("! grep -q " .. post_args.mac:gsub('_.*','') .. " /tmp/mac_cache && (curl -fksm 2 https://api.maclookup.app/v2/macs/" .. post_args.mac:gsub('_.*','') .. "/company/name >> /tmp/mac_cache && echo '|" .. post_args.mac:gsub('_.*','') .. "' >> /tmp/mac_cache); grep " .. post_args.mac:gsub('_.*','') .. " /tmp/mac_cache | cut -d'|' -f1"), "r"))
+                local mac = post_args.mac
+                if mac then
+                        mac = mac:gsub('_.*','')
+                        mac = mac:match("^([%x:]+)$")
+                end
+                if mac then
+                        ngx.print(call_popen(untaint("! grep -q " .. mac .. " /tmp/mac_cache && (curl -fksm 2 https://api.maclookup.app/v2/macs/" .. mac .. "/company/name >> /tmp/mac_cache && echo '|" .. mac .. "' >> /tmp/mac_cache); grep " .. mac .. " /tmp/mac_cache | cut -d'|' -f1"), "r"))
+                else
+                        ngx.status = ngx.HTTP_BAD_REQUEST
+                        ngx.header.content_type = "application/json"
+                        ngx.print('{"error":"invalid mac"}')
+                end
                 ngx.exit(ngx.OK)
                 return
         end
