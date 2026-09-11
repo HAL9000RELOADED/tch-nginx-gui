@@ -8979,3 +8979,13 @@ textarea:focus {
 .infocard {
   padding: 6px 0 6px 0 !important;
 }
+
+/* === Widen device-family modal for data tables (user-requested 2026-09-11) === */
+#device-modal {
+  width: 900px !important;
+  max-width: 92vw !important;
+  left: 50% !important;
+  margin-left: 0 !important;
+  -webkit-transform: translateX(-50%) !important;
+  transform: translateX(-50%) !important;
+}
