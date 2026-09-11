@@ -71,6 +71,10 @@ local check_rule = {
 	{ name = 'systeminitmodal', target = '/modals/system-init-modal.lp' },
 	{ name = 'systemcronmodal', target = '/modals/system-cron-modal.lp' },
 	{ name = 'cardsmodal', target = '/modals/cards-modal.lp' },
+	-- AdGuard Home card (local addition, not upstream): virtual modal target routes the
+	-- card via get_card.lua; the ajax stats endpoint is also readable by guests.
+	{ name = 'adguardhomecard', target = '/cards/adguardhome-virtual-target' },
+	{ name = 'ajaxadguardstats', target = '/ajax/adguard_stats.lua', roles = {'admin','engineer','guest'} },
 }
 
 --We add telstra rules anyway as nginx will respond 404 if not found
@@ -106,7 +110,7 @@ for _ , elem in pairs(check_rule) do
 	if not contains(elem.name, ruleset) then
 		uci:set('web', elem.name ,'rule')
 		uci:set('web', elem.name , 'target', elem.target)
-		uci:set('web', elem.name , 'roles', {'admin','engineer'})
+		uci:set('web', elem.name , 'roles', elem.roles or {'admin','engineer'})
 		ruleset[#ruleset+1] = elem.name
 	end
 end
@@ -158,6 +162,7 @@ local card_check_rule = {
 	{ name = 'natalghelper_card', card = '092_natalghelper.lp', modal = 'natalghelper' },
 	{ name = 'xdsl_card', card = '093_xdsl.lp', modal = 'xdsllowmodal' },
 	{ name = 'speedservice_card', card = '016_speedservice.lp', modal = 'speedservicemodal' },
+	{ name = 'adguardhome_card', card = '100_adguardhome.lp', modal = 'adguardhomecard' },
 }
 
 --Check every element in table
