@@ -511,8 +511,12 @@ app_blacklist() {
 app_xupnp() {
   install() {
     opkg update
-    opkg install xupnpd
-    uci set modgui.app.xupnp_app="1"
+    if opkg install xupnpd; then
+      uci set modgui.app.xupnp_app="1"
+    else
+      uci set modgui.app.xupnp_app="0"
+      logger -t modgui "xupnpd install failed: opkg could not find/install the package"
+    fi
     uci commit modgui
   }
   remove() {
