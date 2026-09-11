@@ -8989,3 +8989,13 @@ textarea:focus {
   -webkit-transform: translateX(-50%) !important;
   transform: translateX(-50%) !important;
 }
+
+/* === Widen wanservices-modal for data tables (DDNS/port forwarding/UPnP, user-requested 2026-09-12) === */
+#wanservices-modal {
+  width: 1300px !important;
+  max-width: 95vw !important;
+  left: 50% !important;
+  margin-left: 0 !important;
+  -webkit-transform: translateX(-50%) !important;
+  transform: translateX(-50%) !important;
+}
