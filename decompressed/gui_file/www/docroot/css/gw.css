@@ -8955,47 +8955,51 @@ textarea:focus {
   }
 }
 
-/* === Force correct 2-column info-card layout (stats page regression fix) === */
-#infocardrow {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-}
-#leftinfocard, #rightinfocard {
-  flex: 0 1 calc(50% - 20px) !important;
-  width: calc(50% - 20px) !important;
-  max-width: calc(50% - 20px) !important;
-  box-sizing: border-box !important;
-}
+@media screen and (min-width: 768px) {
 
-/* === Compact card sizing (reduce vertical scroll, user-requested 2026-09-11) === */
-.smallcard {
-  min-height: 190px !important;
-  margin-bottom: 16px !important;
-}
-.smallcard > .header {
-  padding: 10px 14px !important;
-}
-.infocard {
-  padding: 6px 0 6px 0 !important;
-}
+  /* === Force correct 2-column info-card layout (stats page regression fix) === */
+  #infocardrow {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+  }
+  #leftinfocard, #rightinfocard {
+    flex: 0 1 calc(50% - 20px) !important;
+    width: calc(50% - 20px) !important;
+    max-width: calc(50% - 20px) !important;
+    box-sizing: border-box !important;
+  }
 
-/* === Widen device-family modal for data tables (user-requested 2026-09-11) === */
-#device-modal {
-  width: 95vw !important;
-  max-width: 1800px !important;
-  left: 50% !important;
-  margin-left: 0 !important;
-  -webkit-transform: translateX(-50%) !important;
-  transform: translateX(-50%) !important;
-}
+  /* === Compact card sizing (reduce vertical scroll, user-requested 2026-09-11) === */
+  .smallcard {
+    min-height: 190px !important;
+    margin-bottom: 16px !important;
+  }
+  .smallcard > .header {
+    padding: 10px 14px !important;
+  }
+  .infocard {
+    padding: 6px 0 6px 0 !important;
+  }
 
-/* === Widen wanservices-modal for data tables (DDNS/port forwarding/UPnP, user-requested 2026-09-12) === */
-#wanservices-modal {
-  width: 95vw !important;
-  max-width: 1800px !important;
-  left: 50% !important;
-  margin-left: 0 !important;
-  -webkit-transform: translateX(-50%) !important;
-  transform: translateX(-50%) !important;
+  /* === Widen device-family modal for data tables (user-requested 2026-09-11) === */
+  #device-modal {
+    width: 95vw !important;
+    max-width: 1800px !important;
+    left: 50% !important;
+    margin-left: 0 !important;
+    -webkit-transform: translateX(-50%) !important;
+    transform: translateX(-50%) !important;
+  }
+
+  /* === Widen wanservices-modal for data tables (DDNS/port forwarding/UPnP, user-requested 2026-09-12) === */
+  #wanservices-modal {
+    width: 95vw !important;
+    max-width: 1800px !important;
+    left: 50% !important;
+    margin-left: 0 !important;
+    -webkit-transform: translateX(-50%) !important;
+    transform: translateX(-50%) !important;
+  }
+
 }
