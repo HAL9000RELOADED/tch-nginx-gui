@@ -75,24 +75,27 @@ ngx.print('\
 	  local html = {}
 	  tinsert(html, ui_helper.createSimpleLight(mmpbx_state, mmpbx_info, { light = { id =  "Telephony_LEDStatus" }, span = { id =  "Telephony_Status" } },"fa fa-phone"))
 	  tinsert (html,[[<p class= "subinfos">]] )
-	  local name, value = "", ""
 	  local reged, notreged, reging = 0,0,0
-	  for name, value in pairs (sipprofile_info) do
-	  	local res = datamodel.get (sipprofile_ubus_path..name..".sipRegisterState")
-	  	local enYN = datamodel.get (sipprofile_ubus_path..name..".enable")
-	  	if (type(res) == "table") then
-	  		if (res[1].value == "Registered") then
-	  			reged = reged +1
-	  		elseif (enYN[1].value == "true") and (res[1].value == "Unregistered") then
-	  			notreged = notreged +1
-	  		elseif (enYN[1].value == "true") and (res[1].value == "Registering") then
-	  			reging = reging +1
-	  		end
+	  local batch_sip = {}
+	  for name, _ in pairs(sipprofile_info) do
+	  	batch_sip[name .. "_state"] = sipprofile_ubus_path .. name .. ".sipRegisterState"
+	  	batch_sip[name .. "_enable"] = sipprofile_ubus_path .. name .. ".enable"
+	  end
+	  content_helper.getExactContent(batch_sip)
+	  for name, _ in pairs(sipprofile_info) do
+	  	local state = batch_sip[name .. "_state"]
+	  	local is_enabled = (batch_sip[name .. "_enable"] == "true")
+	  	if state == "Registered" then
+	  		reged = reged + 1
+	  	elseif is_enabled and (state == "Unregistered") then
+	  		notreged = notreged + 1
+	  	elseif is_enabled and (state == "Registering") then
+	  		reging = reging + 1
 	  	end
 	  end
 	  tinsert (html, [[<br/>]])
 	  if reged ~= 0 then
-	  	tinsert(html, format( N("<strong %s>%d </strong> Registered Account",
+	  	tinsert(html, format( N("<strong>%d </strong> Registered Account",
 	  							"<strong %s>%d </strong> Registered Accounts", reged), 0,
 	  							reged))
 	  	tinsert (html, [[<br/>]])
@@ -104,7 +107,7 @@ ngx.print('\
 	  	tinsert (html, [[<br/>]])
 	  end
 	  if notreged ~= 0 then
-	  	tinsert(html, format( N("<strong %s>%d </strong> Unregistered Account",
+	  	tinsert(html, format( N("<strong>%d </strong> Unregistered Account",
 	  							"<strong %s>%d </strong> Unregistered Accounts", notreged), 0,
 	  							notreged))
 	  	tinsert (html, [[</p>]])

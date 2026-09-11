@@ -385,7 +385,7 @@ session:store(tablesessionindexes, tod_index)
 local action_list = content_helper.convertResultToObject(tod_action_path, proxy.get(tod_action_path))
 local timer_list = content_helper.convertResultToObject(tod_timer_path, proxy.get(tod_timer_path))
 local voicednd_list = content_helper.convertResultToObject(tod_voicednd_path, proxy.get(tod_voicednd_path))
-local ringingStatus = proxy.get("uci.tod.todvoicednd.ringing")[1].value
+local _rs = proxy.get("uci.tod.todvoicednd.ringing"); local ringingStatus = (_rs and _rs[1] and _rs[1].value) or "off"
 local timer_data = {}
 
 --To filter out timer section created by ringing schedule rule
@@ -468,7 +468,7 @@ ngx.print('\
 	local html = {}
 	
     html[#html+1] = ui_helper.createSwitch(T"Ringing Schedule", "todStatus", ring_data["todStatus"], nil, ring_helpmsg["todStatus"])
-    html[#html+1] = '<div id = "parent_switch"">'
+    html[#html+1] = '<div id = "parent_switch">'
 	html[#html+1] = ui_helper.createSwitch(T"During this time ringing is", "ringstate_enable", ring_data["profileStatus"]=="on" and '1' or'0', nil, ring_helpmsg["profileStatus"])
 	html[#html+1] = '</div>'
     html[#html+1] = ui_helper.createTable(tod_columns, tod_data, tod_options, nil, nil)

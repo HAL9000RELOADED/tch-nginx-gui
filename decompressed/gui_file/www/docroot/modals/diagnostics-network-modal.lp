@@ -66,7 +66,7 @@ local portAttr = {
   }
 }
   ngx.print('\
-');  ngx.print(ui_helper.createHeader(T"Diagnostics", false, false, 2) ); ngx.print('\
+');  ngx.print(ui_helper.createHeader(T"Diagnostics", false, false, 5) ); ngx.print('\
 <div class="modal-body update">\
 ');  
   local lp = require("web.lp")
@@ -97,17 +97,17 @@ local portAttr = {
           -- todo replace speed with actual speed
           if eth["op" .. v] == "up" then
 	    ngx.print('\
-	    <p class="socket-legend" id = "');  ngx.print(v); ngx.print('">');  ngx.print( T"Connected" ); ngx.print('<p>\
+	    <p class="socket-legend" id = "');  ngx.print(v); ngx.print('">');  ngx.print( T"Connected" ); ngx.print('</p>\
             ');  if(ports_speed[v]) then  ngx.print('\
-              <p class="socket-legend">(');  ngx.print(format(T"%s Mbps", ports_speed[v]) ); ngx.print(')</legend>\
+              <p class="socket-legend">(');  ngx.print(format(T"%s Mbps", ports_speed[v]) ); ngx.print(')</p>\
             ');  end  ngx.print('\
 	    ');  elseif eth["op" .. v] == "Up" then  ngx.print('\
-              <p class="socket-legend" id = "');  ngx.print(v); ngx.print('">');  ngx.print( T"Connected-SFP" ); ngx.print('<p>\
+              <p class="socket-legend" id = "');  ngx.print(v); ngx.print('">');  ngx.print( T"Connected-SFP" ); ngx.print('</p>\
               ');  if(ports_speed[v]) then  ngx.print('\
-                <p class="socket-legend">(');  ngx.print( format(T"%s Mbps", ports_speed[v]) ); ngx.print(')</legend>\
+                <p class="socket-legend">(');  ngx.print( format(T"%s Mbps", ports_speed[v]) ); ngx.print(')</p>\
               ');  end   ngx.print('\
             ');  else   ngx.print('\
-              <p class="socket-legend grayLight" id = "');  ngx.print(v); ngx.print('">');  ngx.print( T"Not connected" ); ngx.print('<p>\
+              <p class="socket-legend grayLight" id = "');  ngx.print(v); ngx.print('">');  ngx.print( T"Not connected" ); ngx.print('</p>\
             ');  end   ngx.print('\
           </div>\
         ');  end   ngx.print('\

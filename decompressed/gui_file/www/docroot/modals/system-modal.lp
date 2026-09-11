@@ -33,15 +33,16 @@ content_helper.getExactContent(env)
 
 -- Check availability of file, return true if found, else false
 local function file_check(file_name)
-  local file_found=io.open(file_name, "rb")
-  if file_found==nil then
+  local file_found = io.open(file_name, "rb")
+  if file_found == nil then
     return false
   else
+    file_found:close()
     return true
   end
 end
 
-local serial_num = format("%s%s",env.factory,env.serial)
+local serial_num = format("%s%s", env.factory or "", env.serial or "")
 local syslog_present, syslog_filter_sw = "0", "0"
 
 -- SSH Access
@@ -55,12 +56,14 @@ local ssh_wan_new, ssh_lan_new, ssh_wan_port_new
 local function set_firewall(target, port)
    -- go through rules to find SSH-wan anonymous section name
    local rules = proxy.get("uci.firewall.rule.")
-   for _,v in ipairs(rules) do
-      if v.param == "name" and (untaint(v.value) == "SSH_wan" or untaint(v.value) == "SSH-wan") then
-          proxy.set(v.path .. "target", target)
-          proxy.set(v.path .. "dest_port", port)
-         return
-      end
+   if type(rules) == "table" then
+     for _,v in ipairs(rules) do
+        if v.param == "name" and (untaint(v.value) == "SSH_wan" or untaint(v.value) == "SSH-wan") then
+            proxy.set(v.path .. "target", target)
+            proxy.set(v.path .. "dest_port", port)
+           return
+        end
+     end
    end
 end
 
@@ -69,23 +72,26 @@ local dbpath = "uci.dropbear.dropbear."
 local dbvalues = proxy.get(dbpath)
 local data = content_helper.convertResultToObject(dbpath, dbvalues)
 
-for _,v in pairs(data) do
-  if v.paramindex == "@afg" then
-    ssh_lan = v.enable
-    ssh_lan_index = "@afg"
-  elseif v.Interface == "lan" and ssh_lan_index ~= "@afg" then
-    ssh_lan = v.enable
-    ssh_lan_index = v.paramindex
-  elseif v.Interface == "wan" then
-    ssh_wan = v.enable
-    ssh_wan_index = v.paramindex
+if type(data) == "table" then
+  for _,v in pairs(data) do
+    if v.Interface == "lan" or v.paramindex == "lan" or v.paramindex == "afg" or (not v.Interface and v.paramindex == "@dropbear[0]") then
+      if v.enable == "1" or ssh_lan ~= "1" then
+        ssh_lan = (v.enable == "0") and "0" or "1"
+        ssh_lan_index = v.paramindex or "@dropbear[0]"
+      end
+    elseif v.Interface == "wan" or v.paramindex == "wan" then
+      ssh_wan = (v.enable == "1") and "1" or "0"
+      ssh_wan_index = v.paramindex or "-1"
+    end
   end
 end
 
 local Syslog = proxy.get("uci.system.system.@system[0].log_ip","uci.system.system.@system[0].log_filter_ip")
-if Syslog[1].value ~= "" or Syslog[2].value ~= "" then
+local log_ip = Syslog and Syslog[1] and Syslog[1].value or ""
+local log_filter_ip = Syslog and Syslog[2] and Syslog[2].value or ""
+if log_ip ~= "" or log_filter_ip ~= "" then
   syslog_present = "1"
-  if Syslog[2].value ~= "" then
+  if log_filter_ip ~= "" then
     syslog_filter_sw = "1"
   end
 end
@@ -102,9 +108,15 @@ if ngx.var.request_method == "POST" then
     -- set lan
     if ssh_lan_new ~= ssh_lan then
        ssh_lan = ssh_lan_new
+       if ssh_lan_index == "-1" or ssh_lan_index == "" then
+          ssh_lan_index = "@dropbear[0]"
+       end
        proxy.set(dbpath..ssh_lan_index.. ".enable", ssh_lan)
-       if ssh_lan_index == "@afg" and proxy.get("uci.dropbear.dropbear.@lan.enable") then
-          proxy.set("uci.dropbear.dropbear.@lan.enable", "0")
+       if ssh_lan_index ~= "lan" and data["lan"] then
+          proxy.set(dbpath.."lan.enable", ssh_lan)
+       end
+       if ssh_lan_index ~= "afg" and data["afg"] then
+          proxy.set(dbpath.."afg.enable", ssh_lan)
        end
        -- Log  that someone has changed SSH access
        ngx.log(ngx.ALERT, "Local Setting of SSH on lan to "..ssh_lan)
@@ -125,10 +137,8 @@ if ngx.var.request_method == "POST" then
 
     syslog_present = vars["syslog_present"]
     syslog_filter_sw = vars["syslog_filter_sw"]
-    if syslog_present == "0" then
-       proxy.set("uci.system.system.@system[0].log_ip","")
-       proxy.set("uci.system.system.@system[0].log_filter_ip","")
-    end
+    proxy.set("uci.system.system.@system[0].log_ip","")
+    proxy.set("uci.system.system.@system[0].log_filter_ip","")
     proxy.apply()
   end
 end
@@ -338,10 +348,9 @@ ngx.print('\
   <legend>');  ngx.print( T"SSH Access" ); ngx.print('</legend>\
     ');
       local html = {}
-      html[#html + 1] = ui_helper.createAlertBlock(T"L'accesso SSH via LAN consente l'accesso root sulla rete locale (porta 22 predefinita). L'accesso WAN apre la porta specificata sul firewall per la gestione remota.", info_box)
       html[#html + 1] = ui_helper.createSwitch(T"LAN", "ssh_lan", ssh_lan)
       html[#html + 1] = ui_helper.createSwitch(T"WAN", "ssh_wan", ssh_wan)
-      html[#html + 1] = ui_helper.createInputText(T"WAN SSH Port", "ssh_wan_port", fwversion_override_content["ssh_wan_port"], nil, fwversion_override_helpmsg["ssh_wan_port"])
+html[#html + 1] = ui_helper.createInputText(T "WAN SSH Port", "ssh_wan_port", fwversion_override_content["ssh_wan_port"], nil, fwversion_override_helpmsg["ssh_wan_port"])
       ngx.print(html)
       ngx.print('\
 </fieldset>\

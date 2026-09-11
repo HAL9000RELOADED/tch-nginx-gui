@@ -25,14 +25,13 @@ local ssid_list = wirelessSSID_helper.getSSID()
 	  <div class="divtable">\
 ');  
 
-local untaint = string.untaint or function(x) return x end
 for i,v in ipairs(ssid_list) do
   if i <= 4 then
-	wifi_text = format('<strong>%s</strong>(%s)', untaint(v.ssid or "") , untaint(v.radio or ""))
+	local wifi_text = format('<strong>%s</strong>(%s)',v.ssid or '' ,v.radio or '')
+	attributes.light.id = "WiFi_Enabled_Led_" .. i
+	attributes.span.id = "WiFi_Enabled_" .. i
+	ngx.print(ui_helper.createSimpleLight(v.state or "0", wifi_text, attributes,"fa fa-wifi"))
   end
-  attributes.light.id = "WiFi_Enabled_Led"
-  attributes.span.id = "WiFi_Enabled"
-  ngx.print(ui_helper.createSimpleLight(v.state or "0", wifi_text, attributes,"fa fa-wifi"))
 end
   ngx.print('\
 	  </div>\

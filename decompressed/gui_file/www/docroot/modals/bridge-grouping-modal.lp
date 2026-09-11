@@ -70,18 +70,20 @@ local success, errmsg = content_helper.getExactContent(getContent)
 if success then
   for k, v in pairs(tmp_tbl) do
    local index = #wanintfs + 1
+   local if_label = wanintfs_name[v] or v
+   local raw_ifname = getContent[v.."ifname"] or ""
    if find(v, "intf") then
---      wanintfs[index] = {v, format("%s-VLAN%s", wanintfs_name[v], getContent[v.."vlan"])}
-      wanintfs[index] = {v, format("%s", wanintfs_name[v] or v)}
+      wanintfs[index] = {v, format("%s", if_label)}
    else
-      if find(getContent[v.."ifname"], "eth") then
-        wanintfs[index] = {v, format("%s-%s", wanintfs_name[v] or v, upper(getContent[v.."ifname"]))}
+      if find(raw_ifname, "eth") then
+        wanintfs[index] = {v, format("%s-%s", if_label, upper(raw_ifname))}
       else
-        local wanintf_path = format("%s@%s.vid", "uci.network.device.", getContent[v.."ifname"])
+        local wanintf_path = format("%s@%s.vid", "uci.network.device.", raw_ifname)
         local result = proxy.get(wanintf_path)
-        if type(result) == "table" then
---          wanintfs[index] = {v,format("%s-VLAN%s", wanintfs_name[v], result[1]["value"])}
-          wanintfs[index] = {v,format("%s", wanintfs_name[v] or v)}
+        if type(result) == "table" and result[1] and result[1]["value"] then
+          wanintfs[index] = {v, format("%s-VLAN%s", if_label, result[1]["value"])}
+        else
+          wanintfs[index] = {v, format("%s", if_label)}
         end
       end
    end
@@ -245,18 +247,18 @@ end
 local bridge_data, bridge_helpmsg = post_helper.handleTableQuery(bridge_columns, bridge_options, bridge_filter, nil, bridge_validate)
 local function getIntfName(intf)
   local returnval = ""
-  if intf == "wan1" then
-    returnval = wanintfs[1][2]
-  elseif intf == "wan2" then
-    returnval = wanintfs[2][2]
-  elseif intf == "wan3" then
-    returnval = wanintfs[3][2]
-  elseif intf == "wan4" then
-    returnval = wanintfs[4][2]
-  elseif intf == "voip" then
-    returnval = wanintfs[#wanintfs - 1][2]
-  elseif intf == "wan" then
-    returnval = wanintfs[#wanintfs][2]
+  if intf == "wan1" and wanintfs[1] then
+    returnval = wanintfs[1][2] or ""
+  elseif intf == "wan2" and wanintfs[2] then
+    returnval = wanintfs[2][2] or ""
+  elseif intf == "wan3" and wanintfs[3] then
+    returnval = wanintfs[3][2] or ""
+  elseif intf == "wan4" and wanintfs[4] then
+    returnval = wanintfs[4][2] or ""
+  elseif intf == "voip" and #wanintfs >= 2 and wanintfs[#wanintfs - 1] then
+    returnval = wanintfs[#wanintfs - 1][2] or ""
+  elseif intf == "wan" and #wanintfs >= 1 and wanintfs[#wanintfs] then
+    returnval = wanintfs[#wanintfs][2] or ""
   end
   return returnval
 end

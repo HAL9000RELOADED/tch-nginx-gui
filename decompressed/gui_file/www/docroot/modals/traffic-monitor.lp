@@ -137,17 +137,18 @@ local lanrx = s2n(content_lan.rx_bytes)
 
 local wifitx, wifirx = 0, 0
 local content_wifi = {}
+local batch_wifi = {}
 for i,v in ipairs(wls) do
-	if proxy.get("sys.class.net.@" .. v.iface .. ".") then
-		if quantenna_wifi and v.iface == "wl1" then
-			v.iface = "eth5"
-		end
-		content_wifi["tx_bytes"] = "sys.class.net.@" .. v.iface .. ".statistics.tx_bytes"
-		content_wifi["rx_bytes"] = "sys.class.net.@" .. v.iface .. ".statistics.rx_bytes"
-		content_helper.getExactContent(content_wifi)
-		wifitx = wifitx + s2n(content_wifi.tx_bytes)
-		wifirx = wifirx + s2n(content_wifi.rx_bytes)
-	end 
+	if quantenna_wifi and v.iface == "wl1" then
+		v.iface = "eth5"
+	end
+	batch_wifi["tx_" .. i] = "sys.class.net.@" .. v.iface .. ".statistics.tx_bytes"
+	batch_wifi["rx_" .. i] = "sys.class.net.@" .. v.iface .. ".statistics.rx_bytes"
+end
+content_helper.getExactContent(batch_wifi)
+for i,v in ipairs(wls) do
+	wifitx = wifitx + s2n(batch_wifi["tx_" .. i])
+	wifirx = wifirx + s2n(batch_wifi["rx_" .. i])
 end
 
 local content_result = getFile(traffic_data_file)
@@ -186,8 +187,8 @@ local function getTrafficData(dtype, name)
     local nline = 1
     local data = {}
 	local datatime = {}
-    filename = format("/tmp/trafficmon/%s_%s", name, dtype)
-    f = io.open(filename, "r")
+    local filename = format("/tmp/trafficmon/%s_%s", name, dtype)
+    local f = io.open(filename, "r")
     if f then
         for line in f:lines() do
             if (nline < 2 ) then
@@ -340,7 +341,7 @@ ngx.print(ui_helper.createHeader(T"Traffic Monitor", false, true) ); ngx.print('
       html[#html+1] =  "</ul>"
 	  html[#html+1] = '<div style="height:400px"><canvas id="LANChart"></canvas></div>'
 	  html[#html+1] = "</fieldset>"
-	  html[#html+1] = "&nbsp"
+	  html[#html+1] = "&nbsp;"
 	  html[#html+1] = '<fieldset id="WifiSection">'
       html[#html+1] = '<ul class="nav nav-tabs">'
       for i,v in ipairs(wls) do
@@ -414,22 +415,33 @@ $(".traffic_data").each(function() {\
 });\
 var TrafficChartOption = {\
 		maintainAspectRatio: false,\
-        legend: {display: false},\
-        scales: {\
-		yAxes: [{ticks: {\
-				callback: function(value) { \
-					return formatBytes(value,2)},\
-				beginAtZero: true}}]},\
-		tooltips: {\
-                enabled: true,\
-                mode: "single",\
-                callbacks: {\
-                    label: function(tooltipItems, data) { \
-                        return formatBytes(tooltipItems.yLabel , 2);},\
-					title: function(tooltipItems, data) {\
-						return;}}},\
-		spanGaps:true,\
-		legend: {display: false},};\
+		spanGaps: true,\
+		plugins: {\
+			legend: { display: false },\
+			tooltip: {\
+				enabled: true,\
+				callbacks: {\
+					label: function(context) { \
+						var val = context.parsed.y !== undefined ? context.parsed.y : context.raw;\
+						return formatBytes(val, 2);\
+					},\
+					title: function() {\
+						return "";\
+					}\
+				}\
+			}\
+		},\
+		scales: {\
+			y: {\
+				beginAtZero: true,\
+				ticks: {\
+					callback: function(value) { \
+						return formatBytes(value, 2);\
+					}\
+				}\
+			}\
+		}\
+};\
 var wan_ctx = document.getElementById("WANChart").getContext("2d");\
 var WANChart = new Chart(wan_ctx, {\
     type: "line",\

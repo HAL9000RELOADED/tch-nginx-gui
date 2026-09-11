@@ -23,8 +23,8 @@ local mapValidTrace = {
     MaxHopCount = getAndValidation(post_helper.getValidateNumberInRange(1,64), post_helper.getValidateWholeNumber),
     MaxSize = getAndValidation(post_helper.getValidateNumberInRange(38,32768), post_helper.getValidateWholeNumber),
     DataBlockSizeT = getAndValidation(post_helper.getValidateNumberInRange(1, 1000), post_helper.getValidateWholeNumber),
-    Timeout = post_helper.validateWholeNumber,
-    Tries = post_helper.validateWholeNumber,
+    Timeout = post_helper.validatePositiveNum,
+    Tries = post_helper.validatePositiveNum,
     ipAddressTrace = post_helper.getOrValidation(post_helper.validateStringIsIP,post_helper.validateStringIsDomainName)
 }
 
@@ -88,7 +88,7 @@ if ngx.var.request_method == "POST" then
     post_content = ngx.req.get_post_args()
     if post_content["action"] == "PING" then
     -- This Condition Check will protect from multiple Ping_Request error
-      if pingState and pingState[1].value ~= "Requested" then
+      if pingState and pingState[1] and pingState[1].value ~= "Requested" then
         gsuccess, helpmsg = restartTest(post_content)
         session:store("diag_ping_action", "TRUE")
       end
@@ -99,7 +99,7 @@ if ngx.var.request_method == "POST" then
         end
     elseif post_content["action"] == "TRACE" then
     -- This Condition Check will protect from multiple Trace_Route error
-        if traceState and traceState[1].value ~= "Requested" then
+        if traceState and traceState[1] and traceState[1].value ~= "Requested" then
           gsuccess, helpmsg = restartTestTrace(post_content)
           session:store("diag_trace_action", "TRUE")
         end

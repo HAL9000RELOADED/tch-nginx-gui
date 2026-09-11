@@ -12,7 +12,7 @@ local action = {
 		local data = {}
 		local new_ver = proxy.get("uci.modgui.gui.new_ver")
 		
-		if new_ver and not ( new_ver[1].value == "" ) then
+		if new_ver and new_ver[1] and new_ver[1].value and new_ver[1].value ~= "" then
 			data["new_version_text"] = new_ver[1].value
 		end
 		
@@ -27,8 +27,24 @@ if action[string.untaint(data.state)] then
 else
 	local file = io.open("/tmp/command_log","r")
 	if file then
-		data["log"] = file:read('*a')
+		local content = file:read('*a')
 		file:close()
+		local last_pct = nil
+		for p in content:gmatch("(%d+%.?%d*)%%") do
+			last_pct = p
+		end
+		if last_pct then
+			data["progress"] = tonumber(last_pct)
+		end
+		-- Strip curl progress bar artifacts from console display
+		local clean_lines = {}
+		for line in content:gmatch("[^\r\n]+") do
+			local sanitized = line:gsub("^[%s#=%-O]*%d+%.?%d*%%[%s#=%-O]*", ""):gsub("^[%s#=%-O]+", ""):gsub("^%s+", "")
+			if sanitized ~= "" then
+				clean_lines[#clean_lines + 1] = sanitized
+			end
+		end
+		data["log"] = table.concat(clean_lines, "\n")
 	end
 end
 

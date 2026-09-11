@@ -61,7 +61,7 @@ msgid "50% of max Frequency in ASYNC mode"
 msgstr "50% der maximalen Frequenz im ASYNC-Modus"
 
 msgid "<p>Remote assistance is currently disabled.</p><p> By clicking on the 'Apply' button with the 'Enabled' checkbox enabled your gateway will be accessible from your broadband connection. After %s minutes of inactivity, or on reboot, remote assistance will be automatically disabled for 'Temporary' mode. </p><p> Please provide the following parameters to your ISP:</p>"
-msgstr "<p>Fernwartung ist aktuell deaktiviert.</p><p> Durch Drücken des 'Anwenden'-Knopfs mit eingeschalteter Checkbox wird Ihr Gateway von der Breitbandseite aus zugreifbar sein. Nach %d Minuten Inaktivität oder beim Neustart wird die Fernwartung im 'Temporären' Modus automatisch wieder deaktiviert. </p><p> Bitte teilen Sie Ihrem Internet Service Provider folgende Parameter mit:</p>"
+msgstr "<p>Fernwartung ist aktuell deaktiviert.</p><p> Durch Drücken des 'Anwenden'-Knopfs mit eingeschalteter Checkbox wird Ihr Gateway von der Breitbandseite aus zugreifbar sein. Nach %s Minuten Inaktivität oder beim Neustart wird die Fernwartung im 'Temporären' Modus automatisch wieder deaktiviert. </p><p> Bitte teilen Sie Ihrem Internet Service Provider folgende Parameter mit:</p>"
 
 msgid "<p>Remote assistance is currently enabled. </p><p>Click 'Apply' button with the 'Enabled' checkbox disabled to disable remote assistance on your gateway </p>"
 msgstr "<p>Fernwartung ist aktuell aktiviert.</p><p> Durch Drücken des 'Anwenden'-Knopfs mit ausgeschalteter Checkbox wird Ihr Gateway von der Breitbandseite nicht mehr zugreifbar sein.</p>"
@@ -2929,8 +2929,8 @@ msgstr "Punkt"
 msgid "<p>%s GUI Version "
 msgstr "<p>%s GUI Version "
 
-msgid "<p>Coded & Expanded by <font style=\"color:#0088cc;\">Ansuel</font> and <a href=\"https://github.com/Ansuel/tch-nginx-gui/graphs/contributors\">these GitHub users.</a><br/>Unlock Utility by <font style=\"color:#0088cc;\">ADeltaX</font>"
-msgstr "<p>Geschrieben und erweitert von <font style=\"color:#0088cc;\">Ansuel</font> und <a href=\"https://github.com/ZioCook/tch-nginx-gui/graphs/contributors\">diesen GitHub Nutzern.</a><br/>Entsperrwerkzeug von <font style=\"color:#0088cc;\">ADeltaX</font>"
+msgid "<p>Coded & Expanded by <font style=\"color:#0088cc;\">Ansuel</font> and <a href=\"https://github.com/NobodySan97/tch-nginx-gui/graphs/contributors\">these GitHub users.</a><br/>Unlock Utility by <font style=\"color:#0088cc;\">ADeltaX</font>"
+msgstr "<p>Geschrieben und erweitert von <font style=\"color:#0088cc;\">Ansuel</font> und <a href=\"https://github.com/NobodySan97/tch-nginx-gui/graphs/contributors\">diesen GitHub Nutzern.</a><br/>Entsperrwerkzeug von <font style=\"color:#0088cc;\">ADeltaX</font>"
 
 msgid " && Translated by <font style=\"color:#0088cc;\">%s</font>"
 msgstr " && Übersetzt von <font style=\"color:#0088cc;\">%s</font>"
@@ -4139,8 +4139,8 @@ msgstr "Bestimmte App ist schon installiert"
 msgid "Specific App"
 msgstr "Bestimmte App"
 
-msgid "If you don't have connection, specific app can be downloaded here ( https://raw.githubusercontent.com/Ansuel/gui-dev-build-auto/master/modular/upgrade-pack-specific%s.tar.bz2 ) and installed manually here."
-msgstr "Wenn Sie keine Verbindung haben, kann die bestimmte App hier heruntergeladen werden ( https://raw.githubusercontent.com/Ansuel/gui-dev-build-auto/master/modular/upgrade-pack-specific%s.tar.bz2 ) und hier manuell installiert."
+msgid "If you don't have connection, specific app can be downloaded here ( https://raw.githubusercontent.com/NobodySan97/gui-dev-build-auto/master/modular/upgrade-pack-specific%s.tar.bz2 ) and installed manually here."
+msgstr "Wenn Sie keine Verbindung haben, kann die bestimmte App hier heruntergeladen werden ( https://raw.githubusercontent.com/NobodySan97/gui-dev-build-auto/master/modular/upgrade-pack-specific%s.tar.bz2 ) und hier manuell installiert."
 
 msgid "Install Specific App Online"
 msgstr "Installieren bestimmte App Online"
@@ -4355,32 +4355,270 @@ msgstr ""
 msgid "Change the default page in system-extra to set this GUI as default"
 msgstr ""
 
-msgid "Card Settings"
-msgstr "Karten-Einstellungen"
+msgid "Voipblock for mmpbx"
+msgstr ""
 
-msgid "Network and Connectivity"
-msgstr "Netzwerk und Konnektivität"
+msgid "Backup Cache Liste"
+msgstr ""
 
-msgid "Security and Routing"
-msgstr "Sicherheit und Routing"
+msgid "The Voipblock for mmpbx is "
+msgstr ""
 
-msgid "System and Services"
-msgstr "System und Dienste"
+msgid "Stop Speed Diagnostics"
+msgstr ""
 
-msgid "Choose which cards to display on the main dashboard. Disabling a card will hide it from the home page."
-msgstr "Wählen Sie aus, welche Karten auf dem Haupt-Dashboard angezeigt werden sollen."
+msgid "Reset CWMP database and force initial provisioning with ACS server."
+msgstr ""
 
-msgid "Show all"
-msgstr "Alle anzeigen"
+msgid "Are you sure you want to reset the configuration? Network settings will return to factory defaults, but the Custom GUI will remain installed."
+msgstr ""
 
-msgid "Hide all"
-msgstr "Alle ausblenden"
+msgid "Technicolor Gateway Web Interface"
+msgstr ""
 
-msgid "Card settings saved successfully"
-msgstr "Karten-Einstellungen erfolgreich gespeichert"
+msgid "Blocco temporaneo. Attendi %s secondi."
+msgstr ""
 
-msgid "NAT Helpers (ALG) allow protocols that embed network addresses to traverse NAT. In bridge mode, NAT is bypassed and managed by the upstream router."
-msgstr "NAT-Helper (ALG) ermöglichen Protokollen mit eingebetteten Netzwerkadressen das Durchqueren von NAT."
+msgid "Verifica"
+msgstr ""
 
-msgid "No NAT Helpers found"
-msgstr "Keine NAT-Helper gefunden"
+msgid "Annulla"
+msgstr ""
+
+msgid "Modalità Debug"
+msgstr ""
+
+msgid "Sessione Assistenza Remota Attiva"
+msgstr ""
+
+msgid "Restore Stock GUI"
+msgstr ""
+
+msgid "Se non modificata, la password predefinita corrisponde all'<strong>Access Code</strong> presente sull'etichetta sotto il modem."
+msgstr ""
+
+msgid "Access Code non valido."
+msgstr ""
+
+msgid "Adblock"
+msgstr ""
+
+msgid "Liste Personalizzate"
+msgstr ""
+
+msgid "Support Project"
+msgstr ""
+
+msgid "The Voipblock for asterisk is "
+msgstr ""
+
+msgid "Are you sure you want to perform a complete factory reset? <br/><strong>This will wipe all custom files and remove root SSH access permanently.</strong>"
+msgstr ""
+
+msgid "GUI Version <a onclick=\"event.stopPropagation()\" target=\"_blank\" href=https://github.com/NobodySan97/tch-nginx-gui/releases/tag/%s>%s</a>"
+msgstr ""
+
+msgid "Sblocco automatico in corso..."
+msgstr ""
+
+msgid "Factory Reset & Remove Root"
+msgstr ""
+
+msgid "Access Code"
+msgstr ""
+
+msgid "Stato e Configurazione Adblock"
+msgstr ""
+
+msgid "Accesso Bloccato"
+msgstr ""
+
+msgid "Support & Donations"
+msgstr ""
+
+msgid "Accedi"
+msgstr ""
+
+msgid "Liste Personalizzate (Un dominio per riga)"
+msgstr ""
+
+msgid "Are you sure you want to restore the official stock GUI? Network configuration and root SSH access will be preserved."
+msgstr ""
+
+msgid "Tentativi errati (%s)."
+msgstr ""
+
+msgid "Disable CWMP Update. Any firmware update from CWMP will be rejected and not flashed. "
+msgstr ""
+
+msgid "Aggiorna Database"
+msgstr ""
+
+msgid "Reset the modem to the firmware stock GUI. Network configuration and root SSH access will be preserved."
+msgstr ""
+
+msgid "Ricaricamento Adblock avviato in background"
+msgstr ""
+
+msgid "Complete factory reset: wipes the entire overlay partition, removing the modded GUI and permanent root access."
+msgstr ""
+
+msgid "Inserisci il codice <strong>\"Access Code\"</strong> presente sotto il modem."
+msgstr ""
+
+msgid "Gateway Sign In"
+msgstr ""
+
+msgid "Configurazione"
+msgstr ""
+
+msgid "This will install Voipblock for mmpbx"
+msgstr ""
+
+msgid "Ricarica e Aggiorna Liste Ora"
+msgstr ""
+
+msgid "Username o Password non validi."
+msgstr ""
+
+msgid "Gateway Login"
+msgstr ""
+
+msgid "Voipblock for asterisk"
+msgstr ""
+
+msgid "Abilita Adblock"
+msgstr ""
+
+msgid "Nessuna connessione Internet attiva"
+msgstr ""
+
+msgid "<p>Fork & Maintained by <font style=\"color:#0088cc;\">NobodySan97</font> (<a target=\"_blank\" href=\"https://ko-fi.com/nobodysan\" style=\"color:#ff5e5b;font-weight:bold;\"><i class=\"fa fa-coffee\"></i> Support on Ko-fi</a>) &mdash; Based on original <font style=\"color:#0088cc;\">Ansuel GUI</font> by <font style=\"color:#0088cc;\">Ansuel</font> and <a href=\"https://github.com/NobodySan97/tch-nginx-gui/graphs/contributors\">these GitHub users.</a><br/>Unlock Utility by <font style=\"color:#0088cc;\">ADeltaX</font>"
+msgstr ""
+
+msgid "Reset all network and service configurations to factory defaults, while keeping the modded Custom GUI installed."
+msgstr ""
+
+msgid "Liste personalizzate salvate con successo!"
+msgstr ""
+
+msgid "Wiping overlay and reverting to factory defaults, please wait..."
+msgstr ""
+
+msgid "Sorgenti Blacklist DNS"
+msgstr ""
+
+msgid "Restoring Stock GUI, please wait..."
+msgstr ""
+
+msgid "Update available! Version: <strong id=\"new-version-text\"><a target=\\"_blank\\" href=https://github.com/NobodySan97/tch-nginx-gui/releases/tag/%s>%s</a></strong>"
+msgstr ""
+
+msgid "Run Speed Diagnostics"
+msgstr ""
+
+msgid "Resetting configuration to defaults, please wait..."
+msgstr ""
+
+msgid "Sorgenti Adblock aggiornate. Ricaricamento in corso..."
+msgstr ""
+
+msgid "Seleziona le liste desiderate. Consigliate: <strong>stevenblack, adguard, disconnect, adaway, yoyo</strong>."
+msgstr ""
+
+msgid "This will install Voipblock for asterisk"
+msgstr ""
+
+msgid "Modalità Bridge Attiva"
+msgstr ""
+
+msgid "Sorgenti DNS"
+msgstr ""
+
+msgid "Invalid attempts (%s)."
+msgstr "Fehlgeschlagene Versuche (%s)."
+
+msgid "Temporary lockout. Please wait %s seconds."
+msgstr "Vorübergehende Sperre. Bitte warten Sie %s Sekunden."
+
+msgid "No active Internet connection"
+msgstr "Keine aktive Internetverbindung"
+
+msgid "Remote Assistance Session Active"
+msgstr "Remote-Support-Sitzung Aktiv"
+
+msgid "Invalid Username or Password."
+msgstr "Ungültiger Benutzername oder Passwort."
+
+msgid "Unless changed, default password matches the <strong>Access Code</strong> on router label."
+msgstr "Falls nicht geändert, entspricht das Standardpasswort dem <strong>Access Code</strong> auf dem Etikett unter dem Router."
+
+msgid "Sign In"
+msgstr "Anmelden"
+
+msgid "Invalid Access Code."
+msgstr "Ungültiger Access Code."
+
+msgid "Access Blocked"
+msgstr "Zugriff Gesperrt"
+
+msgid "Auto-unlocking in progress..."
+msgstr "Automatische Entsperrung läuft..."
+
+msgid "Signing In..."
+msgstr "Anmeldung läuft..."
+
+msgid "Verifying Access Code..."
+msgstr "Access Code wird überprüft..."
+
+msgid "Enter the <strong>"Access Code"</strong> printed under the router."
+msgstr "Geben Sie den <strong>"Access Code"</strong> ein, der auf der Unterseite des Routers aufgedruckt ist."
+
+msgid "Custom Lists (One domain per line)"
+msgstr "Benutzerdefinierte Listen (Eine Domain pro Zeile)"
+
+msgid "DNS Blacklist Sources"
+msgstr "DNS-Blacklist-Quellen"
+
+msgid "Custom lists saved successfully!"
+msgstr "Benutzerdefinierte Listen erfolgreich gespeichert!"
+
+msgid "Adblock sources updated. Reloading in progress..."
+msgstr "Adblock-Quellen aktualisiert. Neuladen läuft..."
+
+msgid "Select desired lists. Recommended: <strong>stevenblack, adguard, disconnect, adaway, yoyo</strong>."
+msgstr "Wählen Sie die gewünschten Listen aus. Empfohlen: <strong>stevenblack, adguard, disconnect, adaway, yoyo</strong>."
+
+msgid "Reload and Update Lists Now"
+msgstr "Listen jetzt neu laden und aktualisieren"
+
+msgid "Backup List Cache"
+msgstr "Listen-Cache sichern"
+
+msgid "Adblock reload started in background"
+msgstr "Adblock-Neuladen im Hintergrund gestartet"
+
+msgid "Enable Adblock"
+msgstr "Adblock aktivieren"
+
+msgid "Custom Lists"
+msgstr "Benutzerdefinierte Listen"
+
+msgid "Adblock Status and Configuration"
+msgstr "Adblock Status und Konfiguration"
+
+msgid "DNS Sources"
+msgstr "DNS-Quellen"
+
+msgid "Update Database"
+msgstr "Datenbank aktualisieren"
+
+msgid "Update in progress... Do not turn off your modem."
+msgstr "Aktualisierung läuft... Schalten Sie das Modem nicht aus."
+
+msgid "Booted Bank"
+msgstr "Gebootete Bank"
+
+msgid "Firmware not present in this bank (OBP Recovery Plan)"
+msgstr "Firmware in dieser Bank nicht vorhanden (OBP-Wiederherstellungsplan)"
+

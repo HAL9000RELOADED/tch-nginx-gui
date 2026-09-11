@@ -83,15 +83,15 @@ ngx.print('\
       <picture>');
 
     if cui.gui_skin == "TIM" then
-      ngx.print('<img width="168px" height="39px" src="/img/TIM.png">');
+      ngx.print('<img style="display: block !important; margin-left: 0 !important; max-height: 48px !important; width: auto !important; object-fit: contain !important;" width="168px" height="39px" src="/img/TIM.png">');
     elseif cui.gui_skin == "Fritz" or string.match(cui.gui_skin, "[dD][aA][rR][kK]") then
       ngx.print('<source srcset="/img/logo_white.webp" type="image/webp">\
         <source srcset="/img/logo_white.png" type="image/png">\
-        <img width="131px" height="50px" src="/img/logo_white.png">');
+        <img style="display: block !important; margin-left: 0 !important; max-height: 48px !important; width: auto !important; object-fit: contain !important;" width="131px" height="50px" src="/img/logo_white.png">');
     else
       ngx.print('<source srcset="/img/logo.webp" type="image/webp">\
         <source srcset="/img/logo.png" type="image/png">\
-        <img width="131px" height="50px" src="/img/logo.png">');
+        <img style="display: block !important; margin-left: 0 !important; max-height: 48px !important; width: auto !important; object-fit: contain !important;" width="131px" height="50px" src="/img/logo.png">');
     end
     ngx.print('  </picture>\
     </a>\
@@ -151,16 +151,11 @@ ngx.print('\
                 html[#html + 1] = [[ <li><a tabindex="-1" href="/password.lp" id="changepass"> ]]
                 html[#html + 1] = T"Profile Settings"
                 html[#html + 1] = [[ </a></li><li class="divider"></li> ]]
-                if session:hasAccess("/modals/cards-modal.lp") then
-                    html[#html + 1] = string.format([[ <li><a tabindex="-1" id="cards-settings-btn" style="cursor: pointer;" data-toggle="modal" data-remote="/modals/cards-modal.lp?_=%s" data-id="cards-modal"> ]], ngx.time())
-                    html[#html + 1] = T"Card Settings"
-                    html[#html + 1] = [[ </a></li><li class="divider"></li> ]]
-                end
             end
         html[#html + 1] = [[ <li><a tabindex="-1" href="https://www.ilpuntotecnico.com/forum/index.php/topic,81461.0.html" target="_blank"> ]]
         html[#html + 1] = T"Support Forum"
         html[#html + 1] = [[ </a></li><li class="divider"></li> ]]
-        html[#html + 1] = [[ <li><a tabindex="-1" href="https://github.com/ZioCook/tch-nginx-gui" target="_blank"> ]]
+        html[#html + 1] = [[ <li><a tabindex="-1" href="https://github.com/NobodySan97/tch-nginx-gui" target="_blank"> ]]
         html[#html + 1] = T"GitHub GUI"
         html[#html + 1] = [[ </a></li><li class="divider"></li> ]]
       if not ( session:getusername() == "guest" ) then
@@ -211,7 +206,7 @@ ngx.print('\
     if cui.outdated_ver == "0" then
       alert_style_upper.alert.class = "alert hide"
     end
-    html[#html + 1] = ui_helper.createAlertBlock(format(T'Update available! Version: <strong id="new-version-text"><a target=\"_blank\" href=https://github.com/ZioCook/tch-nginx-gui/releases>%s</a></strong>',cui.new_ver),alert_style_upper)
+    html[#html + 1] = ui_helper.createAlertBlock(format(T'Update available! Version: <strong id="new-version-text"><a target=\"_blank\" href=https://github.com/NobodySan97/tch-nginx-gui/releases/tag/%s>%s</a></strong>',cui.new_ver,cui.new_ver),alert_style_upper)
 
     local autoupgrade_view = cui.autoupgrade_view
     if not ( autoupgrade_view == "none" ) and not ( autoupgrade_view == "" ) then

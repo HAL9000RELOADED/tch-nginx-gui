@@ -81,12 +81,13 @@ local function convert2Sec(value)
     return 0
 end
 
+local cached_calllog_data
 local mmpbxd_filter = function(data)
     if ( data.enable == "false" ) or ( data.sipRegisterState == "" ) then
         return false
     end
     local originuri = data.uri
-    if data.uri and data.uri:match("+") then
+    if data.uri and data.uri:match("%+") then
         data.uri = data.uri:sub(4)
     end
 
@@ -108,11 +109,14 @@ local mmpbxd_filter = function(data)
         local statestr = callStateMap[data.callState] or data.callState
 		
         if ( data.callState ~= "MMPBX_CALLSTATE_IDLE" ) then
-            local pf_path = proxy.get("rpc.mmpbx.calllog.info.")
-            local pf_data = content_helper.convertResultToObject("rpc.mmpbx.calllog.info.",pf_path)
+            if not cached_calllog_data then
+                local pf_path = proxy.get("rpc.mmpbx.calllog.info.")
+                cached_calllog_data = content_helper.convertResultToObject("rpc.mmpbx.calllog.info.",pf_path)
+            end
+            local pf_data = cached_calllog_data or {}
             for i = #pf_data, 1, -1 do
-                v = pf_data[i]
-                if v.Localparty  == originuri then
+                local v = pf_data[i]
+                if v and v.Localparty == originuri then
                     statestr = statestr .. "\n" .. v.Remoteparty
                     if ( data.callState == "MMPBX_CALLSTATE_CONNECTED" ) then
                         local Duration = ""
@@ -146,6 +150,7 @@ local  mmpbxd_options = {
     basepath = "rpc.mmpbx.profile.",
 }
 
+cached_calllog_data = nil
 local  mmpbxd_data = content_helper.loadTableData(mmpbxd_options.basepath, mmpbxd_columns ,  mmpbxd_filter , nil)
 
 local mmpbx_table = ui_helper.createTable(mmpbxd_columns, mmpbxd_data, mmpbxd_options, nil, nil)

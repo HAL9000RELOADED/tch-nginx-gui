@@ -1,3 +1,15 @@
+
+window.registeredIntervals = window.registeredIntervals || [];
+window.addRegisteredInterval = window.addRegisteredInterval || function(id) {
+    if (id) window.registeredIntervals.push(id);
+};
+window.clearKoInterval = window.clearKoInterval || function() {
+    if (window.registeredIntervals && window.registeredIntervals.length > 0) {
+        window.registeredIntervals.forEach(function(id) { clearInterval(id); });
+        window.registeredIntervals = [];
+    }
+};
+
 var KoRequest = {};
 var connectionissue = 0;
 
@@ -25,10 +37,12 @@ var modgui = modgui || {};
 		);
 		if(logModal){
 			clearKoInterval();
-			$(window).on('shown.bs.modal', function() {
-				$(".modal-backdrop").unbind();
-				$("#close-config,.modal-action-close").unbind( "click" );
-				$("#close-config,.modal-action-close").on("click", function() {
+			$(document).one('shown shown.bs.modal', '.modal', function() {
+				var $m = $(this);
+				$m.data('backdrop', 'static').data('keyboard', false);
+				$(".modal-backdrop").off('click').css('cursor', 'default');
+				$(".modal-footer, .modal-action-close, #close-config").hide();
+				$("#close-config, .modal-action-close").off("click").on("click", function() {
 					onClose();
 				});
 			});
@@ -355,4 +369,12 @@ $(document).ready(function () {
 			}
 		}
 	};
+
+	document.addEventListener("visibilitychange", function () {
+		if (document.hidden) {
+			clearKoInterval();
+		} else {
+			restartKoInterval();
+		}
+	});
 });

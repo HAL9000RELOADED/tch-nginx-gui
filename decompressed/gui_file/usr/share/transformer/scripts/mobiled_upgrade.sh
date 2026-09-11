@@ -39,7 +39,7 @@ if [ -f /tmp/.mobiled.upgrade ]; then
       fi
     fi
 
-    if [ -n "$dev_idx" -a -n "$path" ]; then
+    if [ -n "$dev_idx" ] && [ -n "$path" ]; then
       eval ubus call mobiled.device firmware_upgrade "'{\"dev_idx\":${dev_idx},\"path\":\"${path}\"}'"
     fi
   done

@@ -142,15 +142,17 @@ function M.start(cb)
 	local ip_conflicts={}
 	local itf
 	events['hostmanager.devicechanged'] = function(msg)
-		function CheckConflict(ip_v4or6)
-			local ip_addr
-			for i,v in pairs(msg[ip_v4or6]) do
-				ip_addr = v.address
-				if v['conflicts-with'] ~= nil then
-					ip_conflicts[ip_addr] = 'CONFLICT'
-					cb('ip_address_conflict_'..itf)
-				else
-					ip_conflicts[ip_addr] = nil
+		local function CheckConflict(ip_v4or6)
+			if type(msg) == "table" and type(msg[ip_v4or6]) == "table" then
+				local ip_addr
+				for i,v in pairs(msg[ip_v4or6]) do
+					ip_addr = v.address
+					if v['conflicts-with'] ~= nil then
+						ip_conflicts[ip_addr] = 'CONFLICT'
+						cb('ip_address_conflict_'..itf)
+					else
+						ip_conflicts[ip_addr] = nil
+					end
 				end
 			end
 		end
@@ -163,7 +165,7 @@ function M.start(cb)
 			if (match(msg.l2interface,'^wl')) or msg.l2interface == 'eth5' then itf = 'wl' else itf = 'eth' end
 			CheckConflict('ipv4')
 			CheckConflict('ipv6')
-			no_conflict=true
+			local no_conflict=true
 			for i,v in pairs(ip_conflicts) do
 				if v == 'CONFLICT' then
 					no_conflict = false
@@ -183,8 +185,8 @@ function M.start(cb)
 	end
 
 	events['xdsl'] = function(msg)
-		if msg ~= nil then
-			cb('xdsl_' .. msg.statuscode)
+		if msg ~= nil and msg.statuscode ~= nil then
+			cb('xdsl_' .. tostring(msg.statuscode))
 		end
 	end
 
@@ -255,13 +257,15 @@ function M.start(cb)
 	end
 
 	events['mmpbxbrcmdect.callstate'] = function(msg)
-		if msg ~= nil then
-			if ((msg.dect_dev_0.activeLinesNumber == 1) or
-				(msg.dect_dev_1.activeLinesNumber == 1) or
-				(msg.dect_dev_2.activeLinesNumber == 1) or
-				(msg.dect_dev_3.activeLinesNumber == 1) or
-				(msg.dect_dev_4.activeLinesNumber == 1) or
-				(msg.dect_dev_5.activeLinesNumber == 1)) then
+		if type(msg) == "table" then
+			local active = false
+			for k, v in pairs(msg) do
+				if type(v) == "table" and v.activeLinesNumber == 1 then
+					active = true
+					break
+				end
+			end
+			if active then
 				cb('dect_active')
 			else
 				cb('dect_inactive')
@@ -355,7 +359,7 @@ function M.start(cb)
 	end
 
 	events['mmpbx.outgoingcallstart'] = function(data)
-		if data ~= nil then
+		if data ~= nil and type(data.device) == "string" then
 			if (data.device == "fxs_dev_0") then
 				cb("outgoing_call_line_1")
 			elseif (data.device == "fxs_dev_1") then
@@ -478,7 +482,7 @@ function M.start(cb)
 		end
 	end)
 	if not nl then
-		error("Failed to register with netlink" .. err)
+		error("Failed to register with netlink: " .. tostring(err or ""))
 	end
 
 	uloop.run()

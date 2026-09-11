@@ -1,3 +1,76 @@
+---------------------------------------------------------------------------
+# Mainline 18.3 / 19.4 NobodySan97 Edition
+
+9.7.70 (Stable)
+---------------------------------------------------------------------------
+- **Nuovo Modulo & Card Adblock DNS Sinkhole a Risposta Istantanea**:
+  - `008_adblock.lp` & `adblock_helper.lua`: Nuova card nativa con badge di stato dinamico, conteggio liste attive e totale domini bloccati in tempo reale.
+  - `adblck-config-modal.lp`: Gestione stato globale, download utility (curl), avvio automatico al boot e pulsante rapido di aggiornamento immediato delle liste con protezione token CSRF.
+  - `adblck-sources-modal.lp`: Selezione sorgenti DNS con supporto alle migliori liste mondiali (StevenBlack Unified Hosts, OISD Zero False Positives, HaGeZi Multi Pro, AdGuard DNS, Disconnect Malvertising, ecc.).
+  - `adblck-lists-modal.lp`: Gestione rapida Whitelist e Blacklist personalizzate da interfaccia web con auto-reload.
+  - **Correzioni di Stabilità & UI**:
+    - Risolto bug sul salvataggio delle modifiche (attivazione immediata del pulsante Salva sui checkbox e textarea).
+    - Risolto crash HTTP 500 su Technicolor OpenResty tramite deserializzazione sicura di oggetti tainted/userdata su richieste POST.
+    - Purga automatica di 19 liste obsolete, morte o non rilevanti.
+    - Risoluzione istantanea con direttiva nativa Dnsmasq `address=/dominio/0.0.0.0` e bypass del loop awk per una compilazione ultra-veloce senza carico CPU (`adb_tld='0'`).
+  - `unlock_and_refresh_web_config.lua` & `05_app.sh`: Auto-registrazione automatica della scheda e configurazione iniziale al momento dell'installazione o upgrade della GUI.
+
+9.7.66 (Stable)
+---------------------------------------------------------------------------
+- **Ottimizzazione CPU, Riduzione I/O e Zero-Fork Performance**:
+  - `processinfo.lua`: Sostituito `top -b -n1` con calcolo differenziale diretto da `/proc/stat` in Lua nativo (zero-fork, zero subshell overhead).
+  - `sfp.lua` & `optical.lua`: Sostituiti i comandi shell `cat /proc/sfp_status` e `cat /proc/crossbar_status` con `io.open()` nativo ultra-veloce.
+  - `wifi-nurse-modal.lp`: Raggruppate tutte le query di stazione Wi-Fi 2.4G e 5G in due soli batch iniziali con mappatura O(1), eliminando oltre 400 interrogazioni IPC sincrone in loop.
+  - `shared-script.js`: Integrata l'API HTML5 `document.visibilitychange` per mettere in pausa automaticamente tutti i timer di polling AJAX quando la scheda del browser è in background o minimizzata.
+  - `banktable.lua`: Memorizzato in cache il controllo di validità del banco passivo (`isOtherBankValid`) per eliminare la scansione a blocchi 4KB su memoria NAND Flash.
+  - `cards.lua`: Memorizzata in cache la scansione dei template card sul filesystem, azzerando le letture disco a ogni richiesta HTTP.
+  - `091_system.lp`: Raggruppate in un unico batch `proxy.get()` le 4 verifiche di stato del servizio Dropbear/SSH.
+  - `port_status.lua`: Spostata l'interrogazione della porta WAN all'esterno del ciclo `port_filter`.
+  - `wol` & `99-wol`: Eliminato il loop bloccante da 20s con `sleep 1`, usati comandi atomici `ip route replace` / `ip neigh replace` e ricaricamento non distruttivo del firewall (`firewall reload`).
+  - `99-mmpbxd`: Aggiunta uscita immediata su eventi non-ifup e serializzazione reload con `flock`.
+  - `check_leases`: Riavvio di `dnsmasq` eseguito solo ed esclusivamente quando sono stati effettivamente rimossi lease DHCP statici (`#deleted > 0`).
+  - `command-log-read-modal.lp`: Regolato l'intervallo di polling da 100ms a 1000ms.
+  - `diagnostics-leds-modal.lp` & `diagnostics-network-modal.lp`: Ottimizzato l'autorefresh da 1s/2s a 5s per abbattere il carico CPU continuo.
+  - `06_network.sh`: Disattivazione automatica di DHCPv6 e Router Advertisements (RA) in modalità Bridge, eliminando i conflitti DNS IPv6 con router in cascata.
+  - Aggiornati i server DNS upstream predefiniti a Cloudflare ad altissima velocità (`1.1.1.1` e `1.0.0.1`).
+  - `network.interface.map`: Corretto errore Lua di tipo `concat` (string vs table) su `getDnsServers`, eliminando l'errore di transformer `bad argument #1 to 'concat'`.
+  - `command-log-read-modal.lp` & `commandlogread.lua` & `upgradegui`: Aggiunta barra di avanzamento dinamica e percentuale di download in tempo reale (0% - 100%) durante l'aggiornamento della GUI.
+  - Rimossa la generazione dei file legacy dev (`GUI_dev.tar.bz2`), mantenendo solo i canali ufficiali Stable e Preview.
+
+9.7.60 (Stable)
+---------------------------------------------------------------------------
+- **Nuovo Design System UI/UX Moderno**:
+  - Card elevation elegante con ombreggiatura neutra e transizioni fluide a 60fps
+  - Border radius moderno (10px - 14px) applicato a card, finestre modali e pulsanti
+  - Nuovi indicatori di stato a pillola (Pill Badges) per link connesso/disconnesso/sincronizzazione
+  - Ottimizzazione responsive mobile-first: aree di tocco touch >40px e zero overflow orizzontale
+  - Tabelle di configurazione con righe alternate (Zebra striping) e highlight al passaggio del mouse
+- **Download e Aggiornamento Firmware Resiliente**:
+  - Timeout di download aumentato a 300 secondi con gestione automatica errori e redirect (curl -m 300 -k -s -f -L)
+  - Prevenzione del troncamento archivio su connessioni lente
+- **Pipeline Release Stable vs Preview**:
+  - Canale Stable ufficiale e canale Preview dedicati
+  - Script nativo cross-platform Python per la compilazione automatica dei pacchetti release
+- **Stabilità e Prestazioni**:
+  - Bonifica completa di tutte le finestre modali (76) e card (29) per 100% crash-free nil-safety
+  - Risolti bug e leak di memoria su moduli Lua e streaming log ad alta efficienza
+  - Conformità POSIX /bin/sh su tutti gli script shell
+  - Integrazione supporto Ko-fi (https://ko-fi.com/nobodysan) e rimozione vecchi riferimenti PayPal
+
+9.7.50
+---------------------------------------------------------------------------
+- Revisione e bonifica totale di tutti i 76 file modal LP e 29 file card LP per garantire 100% crash-free nil-safety
+- Risolti bug e leak di memoria su moduli Lua, streaming log ad alta efficienza senza picchi RAM
+- Riorganizzato e chiarito il menu di Reset Avanzato (modgui-modal.lp) con descrizioni dedicate, dialoghi popup espliciti e pulsanti colorati
+- Raggruppate in batch le interrogazioni al datamodel per dispositivi Wi-Fi, contatori di traffico e profili VoIP MMPBX
+- Corretto il ring buffer a finestra scorrevole 24h per il monitoraggio del traffico in trafficmon.lua
+- Risolto bug di sintassi in Transformer system.tcpdump.map (cattura pacchetti 100% funzionante)
+- Conformità POSIX /bin/sh al 100% su tutti i 63 script shell e demoni di sistema (rimossi bashismi e variabili non quotate)
+- Aggiunti link e badge di supporto Ko-fi (https://ko-fi.com/nobodysan) su README, footer GUI e modgui modal; rimossi vecchi riferimenti PayPal
+- Aggiunto badge contatore download totali su README.md
+- Rimossa configurazione legacy CircleCI in favore di GitHub Actions CI/CD
+- Testati e verificati tutti i 9 temi grafici della GUI con resa perfetta e traduzioni italiane UTF-8 complete
+
 
 ---------------------------------------------------------------------------
 # Mainline 18.3 Cobalt

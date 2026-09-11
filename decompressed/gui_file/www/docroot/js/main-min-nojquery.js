@@ -176,12 +176,12 @@ function Apprise(t, e) {
 		}, r.animation, function () {
 			$overlay.fadeOut(300),
 			$Apprise.hide(),
-			$window.unbind("beforeunload"),
-			$window.unbind("keydown"),
+			$window.off("beforeunload"),
+			$window.off("keydown"),
 			AppriseQueue[0] && (Apprise(AppriseQueue[0].text, AppriseQueue[0].options), AppriseQueue.splice(0, 1))
 		})
 	}, this.keyPress = function () {
-		$window.bind("keydown", function (t) {
+		$window.on("keydown", function (t) {
 			27 === t.keyCode ? r.buttons.cancel ? $("#apprise-btn-" + r.buttons.cancel.id).trigger("click") : n.dissapear() : 13 === t.keyCode && (r.buttons.confirm ? $("#apprise-btn-" + r.buttons.confirm.id).trigger("click") : n.dissapear())
 		})
 	}, $.each(r.buttons, function (t, e) {
@@ -197,7 +197,7 @@ function Apprise(t, e) {
 					e.action(t)
 				})
 			}
-		}), r.override && $window.bind("beforeunload", function (t) {
+		}), r.override && $window.on("beforeunload", function (t) {
 			return "An alert requires attention"
 		}), n.adjustWidth(), $window.resize(function () {
 			n.adjustWidth()
@@ -349,7 +349,7 @@ $(function () {
 					this.$backdrop.on("click", "static" == this.options.backdrop ? t.proxy(this.$element[0].focus, this.$element[0]) : t.proxy(this.hide, this)),
 					i && this.$backdrop[0].offsetWidth,
 					this.$backdrop.addClass("in"),
-					e && (i ? this.$backdrop.one(t.support.transition.end, e) : e())
+					e && e()
 				} else { 
 					this.$backdrop = t('.modal-backdrop'),
 					this.$backdrop.on("click", "static" == this.options.backdrop ? t.proxy(this.$element[0].focus, this.$element[0]) : t.proxy(this.hide, this)),
@@ -2270,8 +2270,12 @@ function confirmationDialogue(t, e) {
 	}
 	var lastCardClicked;
 	function u(t, e) {
-		if (!y) {
-			y = !0,
+
+		if (true) {
+
+			y = !0; setTimeout(function(){ y = !1; }, 4000);
+
+			
 			$(".modal").remove();
 			try {
 				p(openMsg)
@@ -2280,7 +2284,7 @@ function confirmationDialogue(t, e) {
 			}
 			$.get(t, function (t) {
 				var n = $(t);
-				0 < n.find("#sign-me-in").length ? (p(loginMsg), window.location = "/login.lp") : ("1" === $("meta[name=Advanced]").attr("content") && (n.find(".advanced.hide").removeClass("hide"), n.find(".modal-action-advanced").parent().remove()), $('<div class="modal fade" id="' + e + '">' + t + "</div>").modal(), m(), y = !1, i())
+				0 < n.find("#sign-me-in").length ? (p(loginMsg), window.location = "/login.lp") : ("1" === $("meta[name=Advanced]").attr("content") && (n.find(".advanced.hide").removeClass("hide"), n.find(".modal-action-advanced").parent().remove()), $('<div class="modal fade in" id="' + e + '">' + t + "</div>").appendTo("body").modal({show:true}), m(), y = !1, i())
 			}).fail(function (t) {
 				if (y = !1, 403 === t.status)
 					p(loginMsg), window.location = "/login.lp";
@@ -2484,20 +2488,30 @@ function confirmationDialogue(t, e) {
 		}
 	});
 	var y = !1;
-	$(document).on("click touchend", '[data-toggle="modal"]', function (t) {
-		t.preventDefault(),
-		u(t = $(this).attr("data-remote"), $(this).attr("data-id"))
-	}),
-	$(document).on("click touchend", ".smallcard", function (t) {
-		if (767 < window.innerWidth) {
-			t.preventDefault();
-			lastCardClicked = $(this);
-			var e = $(t.currentTarget).find('[data-toggle="modal"]');
-			t = e.attr("data-remote"),
-			e = e.attr("data-id"),
-			t && u(t, e)
+	function openCardModal(remote, id) {
+		if (!remote) return;
+		if (y) {
+			console.log("Modal already loading, unlocking...");
+			y = !1;
 		}
-	}),
+		u(remote, id);
+	}
+	$(document).on("click", '[data-toggle="modal"]', function (t) {
+		t.preventDefault();
+		t.stopPropagation();
+		var remote = $(this).attr("data-remote") || $(this).data("remote");
+		var id = $(this).attr("data-id") || $(this).data("id");
+		openCardModal(remote, id);
+	});
+	$(document).on("click", ".smallcard", function (t) {
+		if ($(t.target).is("input, select, button, a:not([data-toggle='modal'])")) return;
+		t.preventDefault();
+		lastCardClicked = $(this);
+		var elem = $(this).find('[data-toggle="modal"]').first();
+		var remote = elem.attr("data-remote") || elem.data("remote") || $(this).attr("data-remote") || $(this).data("remote");
+		var id = elem.attr("data-id") || elem.data("id") || $(this).attr("data-id") || $(this).data("id");
+		openCardModal(remote, id);
+	});
 	$(document).on("click", "#save-config", function () {
 		count += 1;
 		var t = $(".modal form"),
@@ -4655,3 +4669,15 @@ var qrcode = function () {
 	t.mobiscroll.themes["android-ics light"] = e
 }
 (jQuery);
+
+// Force backdrop removal and modal cleanup on hidden
+$(document).on("hidden.modal hidden", ".modal", function() {
+    $(".modal-backdrop").remove();
+    $(this).remove();
+});
+$(document).on("click", '[data-dismiss="modal"]', function() {
+    setTimeout(function() {
+        $(".modal-backdrop").remove();
+        $(".modal:not(.in)").remove();
+    }, 250);
+});

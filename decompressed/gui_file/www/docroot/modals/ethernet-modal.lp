@@ -116,9 +116,11 @@ for k,v in ipairs(all_intfs) do
         local name = ""
         local w1_exist = proxy.get("rpc.wireless.ssid.@"..v["ppp.ll_dev"]..".ssid")
         if match(v["ppp.ll_dev"], "wl") then
-            if w1_exist and proxy.get("rpc.wireless.ssid.@"..v["ppp.ll_dev"]..".ssid")[1].value then
-                name = proxy.get("rpc.wireless.ssid.@"..v["ppp.ll_dev"]..".ssid")[1].value
-                if match(proxy.get("rpc.wireless.ssid.@"..v["ppp.ll_dev"]..".radio")[1].value, "radio_5G") then
+            local ssid_res = proxy.get("rpc.wireless.ssid.@"..v["ppp.ll_dev"]..".ssid")
+            if ssid_res and ssid_res[1] and ssid_res[1].value then
+                name = ssid_res[1].value
+                local radio_res = proxy.get("rpc.wireless.ssid.@"..v["ppp.ll_dev"]..".radio")
+                if radio_res and radio_res[1] and radio_res[1].value and match(radio_res[1].value, "radio_5G") then
                     radio = "5GHz"
                 else
                     radio = "2,4GHz"
@@ -143,84 +145,77 @@ end
 
 ----------------------------------reset function-------------------------------------
 local function restdhcp()
-local file = io.open("/rom/etc/uci-defaults/tch_0035-network-lan","r")
-io.input(file)
-local lanip = ""
-local lanmask = ""
-local checkup = 0
-	while checkup == 0 do
-	local line = io.read()
-		if line ~= nil and (lanip == "" or lanip == nil) then
-			lanip=match(line,"uci set network%."..curintf.."%.ipaddr%=([%d]+%.[%d]+%.[%d]+%.[%d]+)")
+	local lanip = ""
+	local lanmask = ""
+	
+	local file = io.open("/rom/etc/uci-defaults/tch_0035-network-lan", "r")
+	if file then
+		for line in file:lines() do
+			if lanip == "" then
+				lanip = match(line, "uci set network%." .. curintf .. "%.ipaddr%=([%d]+%.[%d]+%.[%d]+%.[%d]+)") or ""
+			end
+			if lanmask == "" then
+				lanmask = match(line, "uci set network%." .. curintf .. "%.netmask%=([%d]+%.[%d]+%.[%d]+%.[%d]+)") or ""
+			end
+			if lanip ~= "" and lanmask ~= "" then
+				break
+			end
 		end
-		if line ~= nil and (lanmask == "" or lanmask == nil) then
-			lanmask=match(line,"uci set network%."..curintf.."%.netmask%=([%d]+%.[%d]+%.[%d]+%.[%d]+)")
-		end
-		if lanip ~= "" and lanip ~= nil and lanmask ~= "" and lanmask ~= nil  then
-			checkup=1
-			io.close(file)
-		elseif line == nil then
-			checkup=2
-			io.close(file)
-		end
+		file:close()
 	end
-	if checkup == 2 then
-	local file2 = io.open("/lib/functions/uci-defaults.sh","r")
-	io.input(file2)
-		while checkup == 2 do
-			local line = io.read()
-			if line ~= nil and (lanip == "" or lanip == nil) then
-				lanip=match(line,"set network%."..curintf.."%.ipaddr%=%'([%d]+%.[%d]+%.[%d]+%.[%d]+)%'")
+
+	if lanip == "" or lanmask == "" then
+		local file2 = io.open("/lib/functions/uci-defaults.sh", "r")
+		if file2 then
+			for line in file2:lines() do
+				if lanip == "" then
+					lanip = match(line, "set network%." .. curintf .. "%.ipaddr%=%'([%d]+%.[%d]+%.[%d]+%.[%d]+)%'") or ""
+				end
+				if lanmask == "" then
+					lanmask = match(line, "set network%." .. curintf .. "%.netmask%=%'([%d]+%.[%d]+%.[%d]+%.[%d]+)%'") or ""
+				end
+				if lanip ~= "" and lanmask ~= "" then
+					break
+				end
 			end
-			if line ~= nil and (lanmask == "" or lanmask == nil) then
-				lanmask=match(line,"set network%."..curintf.."%.netmask%=%'([%d]+%.[%d]+%.[%d]+%.[%d]+)%'")
-			end
-			if lanip and lanip ~= "" and lanmask and lanmask ~= "" or line == nil then
-				checkup=5
-				io.close(file2)
-			end
+			file2:close()
 		end
 	end
 
-	local founddev = 0
 	local ipstart = ""
 	local ipend = ""
 	local ltime = ""
 	local dhcpign = ""
 	local fp = io.open("/rom/etc/config/dhcp", "r")
-	local pattern = format("config dhcp %s",curintf)
-	io.input(fp)
-		while founddev == 0 do
-			local line =io.read()
-			if match(line,pattern) then
-				while founddev == 0 do
-				line =io.read()
-					if line ~= nil and (ipstart == "" or ipstart == nil) then
-						ipstart= match(line,"option start[%s]+'([%d]+)'")
-					end
-					if line ~= nil and (ipend == "" or ipend == nil) then
-						ipend= match(line,"option limit[%s]+'([%d]+)'")
-					end
-					if line ~= nil and (ltime == "" or ltime == nil) then
-						ltime= match(line,"option leasetime[%s]+'([%w]+)'")
-					end
-					if line ~= nil and (dhcpign == "" or dhcpign == nil) then
-						dhcpign= match(line,"option ignore[%s]+'([%d]+)'")
-					end
-					if line == nil or match(line, "config dhcp") or ipstart~= nil and ipstart~="" and ipend ~= nil and ipend ~="" and ltime ~= nil and ltime ~="" and dhcpign ~= nil and dhcpign ~="" then
-						founddev = 1
-					end
+	if fp then
+		local in_target_section = false
+		local pattern = format("config dhcp %s", curintf)
+		for line in fp:lines() do
+			if match(line, pattern) then
+				in_target_section = true
+			elseif in_target_section and match(line, "^%s*config%s+dhcp") then
+				break
+			elseif in_target_section then
+				if ipstart == "" then
+					ipstart = match(line, "option start[%s]+'([%d]+)'") or ""
+				end
+				if ipend == "" then
+					ipend = match(line, "option limit[%s]+'([%d]+)'") or ""
+				end
+				if ltime == "" then
+					ltime = match(line, "option leasetime[%s]+'([%w]+)'") or ""
+				end
+				if dhcpign == "" then
+					dhcpign = match(line, "option ignore[%s]+'([%d]+)'") or ""
 				end
 			end
-			if line == nil then
-				founddev = 1
+		end
+		fp:close()
+	end
 
-			end
-		end
-		io.close(fp)
-		if dhcpign == nil or dhcpign == "" then
-			dhcpign = "0"
-		end
+	if dhcpign == nil or dhcpign == "" then
+		dhcpign = "0"
+	end
 	return lanip, lanmask, ipstart, ipend, ltime, dhcpign
 end
 ------------------------------------reset end-----------------------------------------------------------------
@@ -228,8 +223,10 @@ end
 local IP6assign = "uci.network.interface.@" .. curintf .. ".ip6assign"
 
 local function setupIpv6TIM(active)
-	local envIPv6 = proxy.get("uci.modgui.var.ppp_realm_ipv6")[1].value or nil
-    local envIPv4 = proxy.get("uci.modgui.var.ppp_realm_ipv4")[1].value or nil
+	local envIPv6_res = proxy.get("uci.modgui.var.ppp_realm_ipv6")
+	local envIPv4_res = proxy.get("uci.modgui.var.ppp_realm_ipv4")
+	local envIPv6 = (envIPv6_res and envIPv6_res[1] and envIPv6_res[1].value) or ""
+	local envIPv4 = (envIPv4_res and envIPv4_res[1] and envIPv4_res[1].value) or ""
 	local pppuser = "uci.network.interface.@wan.username"
 	local wan_voip_path = "uci.network.interface.@wan_voip."
 	local wan_path = "uci.network.interface.@wan."
@@ -269,7 +266,9 @@ local mapParam = {
 }
 local function validateIPv6(value, object, key)
     local valid, msg = post_helper.validateBoolean(value, object, key)
-    if valid and value ~= proxy.get("uci.network.interface.@" .. curintf .. ".ipv6")[1].value then
+    local cur_v6_res = proxy.get("uci.network.interface.@" .. curintf .. ".ipv6")
+    local cur_v6 = (cur_v6_res and cur_v6_res[1] and cur_v6_res[1].value) or ""
+    if valid and value ~= cur_v6 then
         local isp = proxy.get("uci.modgui.var.isp")
         local device = proxy.get("uci.network.device.")
         local devifn = content_helper.convertResultToObject("uci.network.device.",device)
@@ -598,11 +597,11 @@ local dnsRemoved = false
 
 -- Check if there is a custom DNS server, if so, then retrieve its index
 -- we'll update the parameters list to include it for retrieval
-dhcp.options = proxy.get(baseDHCPOptions)
+dhcp.options = proxy.get(baseDHCPOptions) or {}
 dnsIndex = #dhcp.options + 1 -- by default index is end of list
 
 for i,v in ipairs(dhcp.options) do
-    if v.value:find("^6,") == 1 then
+    if v.value and v.value:find("^6,") == 1 then
         dnsIndex = tonumber(string.match(v.path, "%.@(%d+)%.$"))
     end
 end
@@ -658,8 +657,9 @@ end
 function isQtnGuestWiFi(intf)
     if wireless_radio[untaint(intf)] then
         local radio = proxy.get(format("rpc.wireless.ssid.@%s.radio", intf))
-        local isRemote = proxy.get(format("rpc.wireless.radio.@%s.remotely_managed", radio[1].value))
-        if isRemote and isRemote[1].value == "1" then
+        local radio_val = (radio and radio[1] and radio[1].value) or ""
+        local isRemote = radio_val ~= "" and proxy.get(format("rpc.wireless.radio.@%s.remotely_managed", radio_val))
+        if isRemote and isRemote[1] and isRemote[1].value == "1" then
             for _, v in ipairs(proxy.getPN("rpc.wireless.ap.", true)) do
                 local isGuest = proxy.get(v.path.."ap_isolation")
                 if isGuest and isGuest[1].value == "1" then
@@ -873,8 +873,10 @@ local function validateGWIP(value, object, key)
         --NG-100782>
         for _,intf in pairs(all_intfs) do
             if intf.paramindex ~= curintf then
-                local ipaddr = proxy.get("uci.network.interface.@" .. intf.paramindex .. ".ipaddr")[1].value
-                local mask = proxy.get("uci.network.interface.@" .. intf.paramindex .. ".netmask")[1].value
+                local ip_res = proxy.get("uci.network.interface.@" .. intf.paramindex .. ".ipaddr")
+                local mask_res = proxy.get("uci.network.interface.@" .. intf.paramindex .. ".netmask")
+                local ipaddr = (ip_res and ip_res[1] and ip_res[1].value) or ""
+                local mask = (mask_res and mask_res[1] and mask_res[1].value) or ""
                 local baseip = post_helper.validateStringIsIP(ipaddr) and ipv42num(ipaddr)
                 local netmask = post_helper.validateStringIsIP(mask) and ipv42num(mask)
                 local sfplocalip = proxy.get("uci.network.interface.@"..sfpintf..".ipaddr")
@@ -940,8 +942,10 @@ local function validateSFPIP(value, object, key)
         --NG-100782>
         for _,intf in pairs(all_intfs) do
             if intf.paramindex ~= sfpintf then
-                local ipaddr = proxy.get("uci.network.interface.@" .. intf.paramindex .. ".ipaddr")[1].value
-                local mask = proxy.get("uci.network.interface.@" .. intf.paramindex .. ".netmask")[1].value
+                local ip_res = proxy.get("uci.network.interface.@" .. intf.paramindex .. ".ipaddr")
+                local mask_res = proxy.get("uci.network.interface.@" .. intf.paramindex .. ".netmask")
+                local ipaddr = (ip_res and ip_res[1] and ip_res[1].value) or ""
+                local mask = (mask_res and mask_res[1] and mask_res[1].value) or ""
                 local baseip = post_helper.validateStringIsIP(ipaddr) and ipv42num(ipaddr)
                 local netmask = post_helper.validateStringIsIP(mask) and ipv42num(mask)
                 local lanip = proxy.get("uci.network.interface.@lan.ipaddr")
@@ -1086,7 +1090,7 @@ content, helpmsg = post_helper.handleQuery(mapParams, mapValid)
 
 if (ngx.var.request_method == "POST")  and not next(helpmsg) then
    local dhcp_options_path = "uci.dhcp.dhcp.@"..cur_dhcp_intf..".dhcp_option."
-   local dhcp_options = content_helper.convertResultToObject(dhcp_options_path,proxy.get(dhcp_options_path))
+   local dhcp_options = content_helper.convertResultToObject(dhcp_options_path, proxy.get(dhcp_options_path) or {})
     for _,v in ipairs(dhcp_options) do
       if v.value:match("^3,") then
         proxy.del(dhcp_options_path..v.paramindex..".")
@@ -1123,7 +1127,8 @@ if dnsRemoved then
     content["dnsServer"] = ""
 end
 if content["dnsServer"] == nil then
-    local localIP = proxy.get("uci.network.interface.@" .. curintf .. ".ipaddr")[1].value
+    local localIP_res = proxy.get("uci.network.interface.@" .. curintf .. ".ipaddr")
+    local localIP = (localIP_res and localIP_res[1] and localIP_res[1].value) or ""
     content["dnsServer"] = localIP
 else
     if content["dnsServer"]:find("^6,") == 1 then
@@ -1267,7 +1272,8 @@ if curintf == "lan" then
         html[#html + 1] = ui_helper.createAlertBlock(T"Switch the WAN port to a normal LAN port", info_box)
         html[#html + 1] = ui_helper.createSwitch(T"WAN-Port LAN Mode", "ethsfp", content_sfp["ethsfp"])
     end
-    local IPv6addr = proxy.get("rpc.network.interface.@"..curintf..".ip6prefix_assignment")[1].value
+    local v6_res = proxy.get("rpc.network.interface.@"..curintf..".ip6prefix_assignment")
+    local IPv6addr = (v6_res and v6_res[1] and v6_res[1].value) or ""
     if IPv6addr == "" then
         html[#html + 1] = ui_helper.createLabel(T"LAN IPv6", T"IPv6 not assigned", advanced)
     else

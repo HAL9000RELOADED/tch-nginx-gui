@@ -1,1 +1,44 @@
-* text=lf
+# Auto-detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# Explicitly ensure Linux shell scripts and web templates use LF
+*.sh text eol=lf
+*.lua text eol=lf
+*.lp text eol=lf
+*.map text eol=lf
+*.po text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+decompressed/gui_file/usr/share/transformer/scripts/* text eol=lf
+decompressed/gui_file/etc/init.d/* text eol=lf
+decompressed/gui_file/etc/modgui_scripts/* text eol=lf
+decompressed/gui_file/etc/hotplug.d/**/* text eol=lf
+
+# Windows batch files must use CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text
+*.tar.bz2 binary
+*.tar.gz binary
+*.bz2 binary
+*.gz binary
+*.bin binary
+*.so binary
+*.ko binary
+*.o binary
+
+# Fonts must be treated as pure binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.otf binary

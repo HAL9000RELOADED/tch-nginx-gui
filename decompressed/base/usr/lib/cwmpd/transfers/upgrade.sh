@@ -9,7 +9,7 @@ CONFIG=cwmp_transfer
 
 char_encoding()
 {
-  lua <<EOF - $1
+  lua - "$1" << 'EOF'
 local name = arg[1]
 local escapes = ":/?#[]@!$&'()*+;="
 local function escape_char(x)
@@ -19,7 +19,7 @@ local function escape_char(x)
     return x
   end
 end
-name =name:gsub(".", escape_char)
+name = name:gsub(".", escape_char)
 io.write(name)
 EOF
 }
@@ -95,7 +95,7 @@ get_url()
 get_uci_id()
 {
   local cmdkey="$1"
-  local id=$(uci show -q $CONFIG | grep ".id='$cmdkey$'" | cut -d. -f2)
+  local id=$(uci show -q $CONFIG | grep "\.id='$cmdkey'" | cut -d. -f2)
   if [ $? -ne 0 ]; then
     id=
   fi
@@ -122,12 +122,12 @@ set_started()
   local cmdkey="$1"
   local value=$2
   local url=$3
-  if [ -z $value ]; then
+  if [ -z "$value" ]; then
     value="yes"
   fi
   local id=$(get_uci_id "$cmdkey")
   if [ "$value" = "yes" ]; then
-    if [ -z $id ]; then
+    if [ -z "$id" ]; then
       uci show $CONFIG >/dev/null 2>/dev/null
       if [ $? -ne 0 ]; then
         #config does not exist, create it
@@ -168,14 +168,14 @@ get_error()
   local cmdkey="$1"
   local id=$(get_uci_id "$cmdkey")
   local value=$(uci -q get $CONFIG.$id.error)
-  if [ -z $value ]; then
+  if [ -z "$value" ]; then
     value="0"
   fi
-  if is_dual_bank && [ -f /proc/banktable/active ]; then
+  if platform_is_dualbank && [ -f /proc/banktable/active ]; then
     local expected=$(uci get $CONFIG.$id.bank)
     local active=$(cat /proc/banktable/active)
     local booted=$(cat /proc/banktable/booted)
-    if [ -z $expected ]; then
+    if [ -z "$expected" ]; then
       # The previous firmware did not record the expected active bank so we
       # are not able to check it. Assume it is correct.
       expected=$active
@@ -203,7 +203,7 @@ if [ "$TRANSFER_TYPE" != "download" ]; then
   exit 1
 fi
 
-if [ -z $TRANSFER_URL ]; then
+if [ -z "$TRANSFER_URL" ]; then
   echo "no URL specified"
   ubus send FaultMgmt.Event '{ "Source":"cwmpd", "EventType":"ACS provisioning", "ProbableCause":"Firmware upgrade error", "SpecificProblem":"no URL specified" }'
 
@@ -219,12 +219,12 @@ if [ -z $TRANSFER_URL ]; then
   exit 1
 fi
 
-if [ -z $TRANSFER_ID ]; then
+if [ -z "$TRANSFER_ID" ]; then
   #replace with something longer than 32 chars
   TRANSFER_ID="===Default==PlaceHolder==NULL==ID=="
 else
   uciid=$(get_uci_id "$TRANSFER_ID")
-  if [ -z $uciid ]; then
+  if [ -z "$uciid" ]; then
     TRANSFER_ID_DECODED=`echo $TRANSFER_ID | sed 's/../0x&\n/g' | awk '{ printf("%c",$0)}'`
     uciid=$(get_uci_id "$TRANSFER_ID_DECODED")
     if [ ! -z $uciid ]; then
@@ -360,7 +360,7 @@ if [ "$TRANSFER_ACTION" = "cleanup" ]; then
       [ "$TRANSFER_ID" = "$(cat /proc/banktable/legacy_upgrade/key | hexdump -v -e '/1 "%02X"')" ] && echo "1" > /proc/banktable/erase_upgrade_info
     fi
     # Upgrade finished succesfully, remove database and transfer information from passive bank (for dual bank platform)
-    if is_dual_bank; then
+    if platform_is_dualbank; then
       [ -f /overlay/$(cat /proc/banktable/notbooted 2>/dev/null)/etc/cwmpd.db ] && rm /overlay/$(cat /proc/banktable/notbooted)/etc/cwmpd.db
       [ -f /overlay/$(cat /proc/banktable/notbooted 2>/dev/null)/etc/config/cwmp_transfer ] && rm /overlay/$(cat /proc/banktable/notbooted)/etc/config/cwmp_transfer
     fi

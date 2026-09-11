@@ -34,7 +34,7 @@ local match, format = string.match, string.format
 
 local function split(str, ang)
 	local tab = {}
-	for vari in string.gfind(format("%s",str), ang) do
+	for vari in string.gmatch(format("%s",str), ang) do
 		table.insert(tab, vari)
 	end
 	return tab
@@ -295,9 +295,9 @@ ngx.print(ui_helper.createMessages(message_helper.popMessages()))
 \
 <script language ="javascript">\
     $(document).ready(function(){\
-        if ( $.trim($("#wanIpAddrParam").val()).length <=0 || $.trim($("#wanNetmaskParam").val()).length <=0 || $.trim($("#wanGatewayParam").val()).length <=0) {\
-            $(\'#modal-no-change\').hide();\
-            $(\'#modal-changes\').show();\
+        if ( ($("#wanIpAddrParam").val() || "").trim().length <= 0 || ($("#wanNetmaskParam").val() || "").trim().length <= 0 || ($("#wanGatewayParam").val() || "").trim().length <= 0) {\
+            $('#modal-no-change').hide();\
+            $('#modal-changes').show();\
         }\
     });\
 </script>\

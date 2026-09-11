@@ -161,7 +161,7 @@ for i,v in ipairs(wl_list) do
     if (v.value == getiface) or (not getiface and v.value == curiface) then
         curiface = v.value
         curap = match(v.path, "rpc%.wireless%.ap%.@([^%.]+)%.")
-        isguest = proxy.get(v.path .. "ap_isolation")[1].value
+        local _ig = proxy.get(v.path .. "ap_isolation"); isguest = (_ig and _ig[1] and _ig[1].value) or "0"
         cur_ssid = values[2].value
     end
  end
@@ -221,7 +221,7 @@ end
 
 if ngx.req.get_method() == "GET" and ngx.req.get_uri_args().action == "get_reg_status"  then
     local acl_ap = ngx.req.get_uri_args().curap
-    local reg_status = proxy.get("rpc.wireless.ap.@"..acl_ap..".acl.state")[1].value
+    local _rst = proxy.get("rpc.wireless.ap.@"..acl_ap..".acl.state"); local reg_status = (_rst and _rst[1] and _rst[1].value) or "0"
     ngx.print(reg_status)
     ngx.exit(ngx.HTTP_OK)
 end
@@ -872,7 +872,7 @@ if ngx.req.get_method() == "POST" then
     local args = ngx.req.get_post_args()
     local action = args["action"]
     local pin = args["wps_device_pin_code"]
-    if action == "wps_device_pin_code" and content["wps_enabled"] == "1" and isguest ~= 0 then
+    if action == "wps_device_pin_code" and content["wps_enabled"] == "1" and (isguest == "0" or isguest == 0) then
         local res, help = vPIN(pin)
         content["wps_device_pin_code"] = pin
 
@@ -885,7 +885,7 @@ if ngx.req.get_method() == "POST" then
     end
   -- End of device PIN code support
   -- triggered only on a POST with action set wps_pbc
-    if action == "wps_pbc" and content["wps_enabled"] == "1" and isguest ~= 0 then
+    if action == "wps_pbc" and content["wps_enabled"] == "1" and (isguest == "0" or isguest == 0) then
         proxy.set("rpc.wireless.wps_button","1")
     end
   -- End of WPS PBC code support
@@ -1566,7 +1566,7 @@ else
     html[#html + 1] = format([[
       <div id="rescan-changes_%s" class="hide">
       <div id="rescan-cancel_%s" class="btn">%s</div>
-      <div id="rescan-confirm_%s" class="btn btn-primary" data-dimiss="modal">%s</div></div>]],
+      <div id="rescan-confirm_%s" class="btn btn-primary" data-dismiss="modal">%s</div></div>]],
       freq,freq,T"Cancel",freq,T"Accept")
     ngx.print(html)
   ngx.print('\

@@ -2,6 +2,7 @@
 
 restart_dnsmasq=0
 
+debug="${debug:-0}"
 logecho() {
   if [ "$debug" = "1" ]; then
     logger -t "IspConfigHelper" "$1"
@@ -14,10 +15,10 @@ purify_from_tim() {
   uci -q del network.wan_ipv6
   uci -q del dhcp.dnsmasq.server
   restart_dnsmasq=1
-  if [ $(uci get -q system.acotel.enabled) ] && [ "$(uci get -q system.acotel.enabled)" != "0" ]; then
+  if [ "$(uci get -q system.acotel.enabled)" = "1" ]; then
     logecho "Disabling and killing Acotel agent..."
     uci set system.acotel.enabled='0'
-    kill -9 "$(ps | grep Acotel | grep -v grep | cut -d' ' -f1)"
+    killall -9 Acotel 2>/dev/null || true
     [ -f /rom/chroot/Acotel_UA/TRACER.log ] && cp /rom/chroot/Acotel_UA/TRACER.log /chroot/Acotel_UA/TRACER.log
     [ -f /rom/chroot/Acotel_UA/Acotel_run.log ] && cp /rom/chroot/Acotel_UA/Acotel_run.log /chroot/Acotel_run.log
   fi

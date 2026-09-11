@@ -33,8 +33,10 @@ local function getDayNeeded(value)
   local curYear = os.date("%Y")
   local curDay
   -- the format of value is like M10.5.0, which means the 10th month(Oct.), the 5th Sun.
-  local curMonth, order, day = value:match("M([^.]+).([^.]+).([^.]+)")
-  if not (tonumber(order) >= 1 and tonumber(order) <= 5) or not (tonumber(day) >= 0 and tonumber(day) <= 6) then
+  local curMonth, order, day = value and value:match("M([^.]+).([^.]+).([^.]+)")
+  local nOrder = tonumber(order)
+  local nDay = tonumber(day)
+  if not (nOrder and nOrder >= 1 and nOrder <= 5) or not (nDay and nDay >= 0 and nDay <= 6) then
     return nil, "Invalid value"
   else
     -- we need to know the first day in this month is wday, sothat we can calculate the 5th Sun. is wday
@@ -247,11 +249,13 @@ end
 local function parseLocaltimezonename(localTimeZoneName_uci)
   local localtimezonename = get_from_uci(localTimeZoneName_uci)
   local localtimezoneValue, timezoneValue, dsttimezoneValue
-  local timezoneValuePos = string.find(localtimezonename,",")
-  if timezoneValuePos~=nil then
-    localtimezoneValue = string.sub(localtimezonename, 1, timezoneValuePos-1)
-    timezoneValue, dsttimezoneValue = M.getLocaltimezoneWithoutSDTDST(localtimezoneValue)
-  else
+  if localtimezonename then
+    local timezoneValuePos = string.find(localtimezonename,",")
+    if timezoneValuePos ~= nil then
+      localtimezoneValue = string.sub(localtimezonename, 1, timezoneValuePos-1)
+    else
+      localtimezoneValue = localtimezonename
+    end
     timezoneValue, dsttimezoneValue = M.getLocaltimezoneWithoutSDTDST(localtimezoneValue)
   end
   return timezoneValue, dsttimezoneValue

@@ -57,6 +57,9 @@ local  port_options = {
     basepath = "sys.eth.port.@.",
 }
 
+local wan_port_val = proxy.get("uci.ethernet.port.@"..ethname..".wan")
+local is_wan = (wan_port_val and wan_port_val[1] and wan_port_val[1].value == "1")
+
 local port_filter = function(data)
 
 	data.status_light = "1"
@@ -79,11 +82,17 @@ local port_filter = function(data)
 
 	if quantenna_wifi and data.paramindex:match("eth5") then
 		return false
-	elseif data.paramindex:match(ethname) and ( proxy.get("uci.ethernet.port.@"..ethname..".wan")[1].value == "1" ) then
-		data.paramindex = "WAN"
 	else
-		port = data.paramindex:gsub("eth","")
-		data.paramindex = "LAN - " .. tonumber(port)+1
+		if data.paramindex:match(ethname) and is_wan then
+			data.paramindex = "WAN"
+		else
+			local port_num = tonumber(data.paramindex:match("eth(%d+)"))
+			if port_num then
+				data.paramindex = "LAN - " .. (port_num + 1)
+			else
+				data.paramindex = data.paramindex
+			end
+		end
 	end
 
   return true
@@ -114,17 +123,22 @@ elseif wifi_content.wifi5_mode == "an" then
 	wifi_content.wifi5_mode = "a/n"
 end
 
+local speed24 = tonumber(wifi_content.wifi24_speed)
+local speed24_str = (wifi_content.wifi24_status == "1" and speed24) and (speed24 / 1000 .. " Mbps") or ""
+local speed5 = tonumber(wifi_content.wifi5_speed)
+local speed5_str = (wifi_content.wifi5_status == "1" and speed5) and (speed5 / 1000 .. " Mbps") or ""
+
 port_data[#port_data+1] = {
 	"Wi-Fi 2.4 Ghz", --type
 	ui_helper.createSimpleLight(wifi_content.wifi24_status, "", {}, "fa fa-wifi"), --status
-	( wifi_content.wifi24_status == "1" ) and ( wifi_content.wifi24_speed / 1000 .. " Mbps" ) or "", --speed
+	speed24_str, --speed
 	( wifi_content.wifi24_status == "1" ) and wifi_content.wifi24_mode or "", --mode
 }
 
 port_data[#port_data+1] = {
 	"Wi-Fi 5 Ghz", --type
 	ui_helper.createSimpleLight(wifi_content.wifi5_status, "", {}, "fa fa-wifi"), --status
-	( wifi_content.wifi5_status == "1" ) and ( wifi_content.wifi5_speed / 1000 .. " Mbps" ) or "", --speed
+	speed5_str, --speed
 	( wifi_content.wifi5_status == "1" ) and wifi_content.wifi5_mode or "", --mode
 }
 

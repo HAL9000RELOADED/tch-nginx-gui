@@ -51,10 +51,11 @@ local config = get_cards_from_config()
 local function card_visible(session, config, cardname)
   local card = config[cardname]
   if card then
-    if card.hide then
-      return false
+    local access = false
+    if session and card.modal then
+      access = session:hasAccess(card.modal)
     end
-    if card.modal and not session:hasAccess(card.modal) then
+    if not access and card.hide then
       return false
     end
   end
@@ -89,35 +90,10 @@ function M.setpath(path)
   includepath = path
 end
 
-local dataReq = {
-	
-}
-
-local function compareValueFromConfig(dataReq,val2)
-	
-	local result = nil
-	
-	uci:foreach('web', 'card', function(card)
-
-		local rule = rules[card.modal]
-
-		if rule and not card['.anonymous'] then
-			if val1 == val2 then
-				result = rule.target
-			end
-		end
-	end)
-
-	uci:unload('web')
-	
-	return result
-end
-
 --Returns card from modal provided or nil
 function M.get_card_from_modal(ModalSearch)
 	local session = ngx.ctx.session
 	local result
-	local current_config = get_cards_from_config()
 	
 	uci:foreach('web', 'card', function(card)
 
@@ -132,7 +108,7 @@ function M.get_card_from_modal(ModalSearch)
 
 	uci:unload('web')
 	
-	if result and card_visible(session, current_config, (result:gsub("^%d+_", ""))) then
+	if result and card_visible(session, config, (result:gsub("^%d+_", ""))) then
 	  return result
 	end
 	
@@ -158,22 +134,33 @@ function M.get_modal_from_card(CardSearch)
 	return result
 end
 
+local card_files_cache = {}
+
 function M.cards()
   local session = ngx.ctx.session
   local limit_info = get_limit_info()
   local result = {}
-  local current_config = get_cards_from_config()
-  if includepath and lfs.attributes(includepath, 'mode') == 'directory' then
-    for file in lfs.dir(includepath) do
-      if find(file, "%.lp$") then
-        local cardname = file:gsub("^%d+_", "")
-        if card_visible(session, current_config, cardname) and not card_limited(limit_info, cardname, includepath) then
-          result[#result+1] = file
+  if not includepath then return result end
+
+  if not card_files_cache[includepath] then
+    local files = {}
+    if lfs.attributes(includepath, 'mode') == 'directory' then
+      for file in lfs.dir(includepath) do
+        if find(file, "%.lp$") then
+          files[#files+1] = file
         end
       end
+      sort(files)
+    end
+    card_files_cache[includepath] = files
+  end
+
+  for _, file in ipairs(card_files_cache[includepath]) do
+    local cardname = file:gsub("^%d+_", "")
+    if card_visible(session, config, cardname) and not card_limited(limit_info, cardname, includepath) then
+      result[#result+1] = file
     end
   end
-  sort(result)
   return result
 end
 

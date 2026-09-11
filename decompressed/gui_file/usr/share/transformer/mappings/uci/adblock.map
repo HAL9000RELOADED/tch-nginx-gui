@@ -1,0 +1,30 @@
+local config_adblock = "adblock"
+
+-- uci.adblock
+mapper("uci_1to1").registerConfigMap(config_adblock)
+
+-- uci.adblock.global
+local adblock_global = {
+  config = config_adblock,
+  section = "global",
+  type = "adblock",
+  options = {
+    "adb_enabled", "adb_srcarc", "adb_srcfile", "adb_dns", "adb_fetchutil", "adb_fetchparm",
+    "adb_trigger", "adb_debug", "adb_backup", "adb_backupdir", "adb_safesearch",
+  }
+}
+
+mapper("uci_1to1").registerSimpleMap(adblock_global)
+
+-- uci.adblock.source
+local adblock_source = {
+  config = config_adblock,
+  type = "source",
+  options = {
+    "adb_src", "adb_src_rset", "adb_src_desc", "enabled",
+  },
+  lists = { "adb_src_cat" }
+}
+
+mapper("uci_1to1").registerNamedMultiMap(adblock_source)
+

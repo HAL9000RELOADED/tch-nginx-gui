@@ -191,7 +191,7 @@ function M.start(cb)
     end 
 
     events['FaultMgmt.Event'] = function(msg)
-        if msg ~= nil and msg.EventType:match("ACS provisioning") ~= nil and msg.ProbableCause:match("Inform success") ~= nil then
+        if msg ~= nil and msg.EventType and msg.EventType:match("ACS provisioning") and msg.ProbableCause and msg.ProbableCause:match("Inform success") then
             if wan_status == "ifup" then
                 if led.broadband.status == "no_line" or led.broadband.status == "sync" then
                     cb('network_interface_wan_ifup')
@@ -288,7 +288,7 @@ function M.start(cb)
     end
 
     events['line.button'] = function(msg)
-        if msg ~= nil and led.broadband.status == "off" or led.broadband.status == "ip_connected" or led.broadband.status == "ping_ok" or led.broadband.status == "ping_ko" then
+        if msg ~= nil and (led.broadband.status == "off" or led.broadband.status == "ip_connected" or led.broadband.status == "ping_ok" or led.broadband.status == "ping_ko") then
             if msg.lineinfo == "ping OK" then
                 cb('ping_success')
                 update_led_status(cb, "broadband", "ping_ok", "timerled", "green-blink")
@@ -301,7 +301,7 @@ function M.start(cb)
     end
 
     events['wireless.button'] = function(msg)
-        if msg ~= nil and msg.action ~= nil then
+        if msg ~= nil and msg.action ~= nil and type(msg.radioinfo) == "table" then
             if msg.radioinfo["2G_state"] == "off" and msg.radioinfo["5G_state"] == "off" then
                 cb('wifi_both_radio_off')
                 update_led_status(cb, "wireless", "radio_off", "timerled", "red-solid")
@@ -375,22 +375,28 @@ function M.start(cb)
                 -- However we still need to set the ambient led 'off' since line led 'on' during 'reset_prepare' and 'reset_ongoing'.
 
                 if led.broadband.status ~= "initial" then
-                    cb('reset_prepare')
+                    cb('reset_pressed')
                     cb('service_led_on')
                     led.ambient.status = "off"
                     export_led_color("ambient", "off")
                 end
 
-                reset_timer = uloop.timer(function() cb('reset_ongoing') end, reset_timeout)
+                reset_timer = uloop.timer(function() cb('reset_factory') end, reset_timeout)
             elseif msg.action == "released" then
-                if string.match(msg.resetinfo, "factory") == "factory" then
+                if msg.resetinfo and string.match(msg.resetinfo, "factory") == "factory" then
                     -- Broadband led status will be controlled according to pattern when reset pressed, don't change its status.
                     -- Ambient led has been set during the pre-condition pattern 'reset_prepare', no need to reset here.
-                    cb('reset_ongoing')
-                elseif string.match(msg.resetinfo, "abort") == "abort" or string.match(msg.resetinfo, "complete") == "complete" then
-                    cb('reset_noaction')
-                    reset_timer:cancel()
-                    reset_timer = nil
+                    cb('reset_factory')
+                elseif msg.resetinfo and (string.match(msg.resetinfo, "abort") == "abort" or string.match(msg.resetinfo, "complete") == "complete") then
+                    if string.match(msg.resetinfo, "complete") == "complete" then
+                        cb('reset_complete')
+                    else
+                        cb('reset_abort')
+                    end
+                    if reset_timer then
+                        reset_timer:cancel()
+                        reset_timer = nil
+                    end
 
                     if led.broadband.status == "off" and (led.wireless.status == "off" or led.wireless.status == "initial") and (led.wps.status == "off" or led.wps.status == "initial") then
                         -- Always update ambient status inspite of its pattern, so that status can be represent as soon as it gets active.
@@ -460,7 +466,7 @@ function M.start(cb)
     end)
 
     if not nl then
-        error("Failed to register with netlink" .. err)
+        error("Failed to register with netlink: " .. tostring(err or ""))
     end
 
     uloop.run()

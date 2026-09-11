@@ -7,6 +7,7 @@ local ui_helper = require("web.ui_helper")
 local proxy = require("datamodel")
 local content_helper = require("web.content_helper")
 local insert, format = table.insert, string.format
+local untaint_mt = require("web.taint").untaint_mt
 
 local dhcpState_text = ""
 local dhcpState
@@ -73,7 +74,7 @@ end
         ngx.print(
             ui_helper.createSimpleLight(dhcpState, dhcpState_text, nil,"fa fa-home" ),
             '<p class="subinfos">',
-            format(T'Gateway IP is <strong id="Gateway_Ip">%s</strong> and Mask is <strong id="Netmask_Ip">%s</strong>', mapParams["localdevIP"], mapParams["localdevmask"]),
+            format(T'Gateway IP is <strong id="Gateway_Ip">%s</strong> and Mask is <strong id="Netmask_Ip">%s</strong>', mapParams["localdevIP"] or "", mapParams["localdevmask"] or ""),
             '</p>',
 			ui_helper.createSimpleLight(ipv6_light_map[LANv6] or "4" --[[ red ]], ipv6_state_map[LANv6] or T "Unknown", nil, "fa fa-home")
         )

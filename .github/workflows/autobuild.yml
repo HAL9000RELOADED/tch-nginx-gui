@@ -1,0 +1,109 @@
+name: Autobuild and Publish GUI Release
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '.gitignore'
+      - '.gitattributes'
+      - 'LICENSE'
+      - '*.bat'
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Release channel (stable, preview, or dev)'
+        required: true
+        type: choice
+        options:
+          - stable
+          - preview
+          - dev
+        default: 'stable'
+      custom_version:
+        description: 'Specific version override (e.g. 9.8.0), leave empty for auto-increment'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tch-nginx-gui
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout gui-dev-build-auto
+        uses: actions/checkout@v4
+        with:
+          repository: NobodySan97/gui-dev-build-auto
+          path: gui-dev-build-auto
+          token: ${{ secrets.AUTOBUILD_PAT || secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Build and Release Script
+        id: build_step
+        env:
+          RELEASE_CHANNEL: ${{ github.event.inputs.channel }}
+          CUSTOM_VERSION: ${{ github.event.inputs.custom_version }}
+        run: |
+          python scripts/build_release.py "$GITHUB_WORKSPACE/gui-dev-build-auto"
+
+      - name: Push to gui-dev-build-auto
+        working-directory: gui-dev-build-auto
+        run: |
+          git config user.name "GitHub Actions Autobuild"
+          git config user.email "actions@github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            NEW_VER="${{ steps.build_step.outputs.version }}"
+            CHANNEL="${{ steps.build_step.outputs.channel }}"
+            git commit -m "Autobuild ${CHANNEL} release v${NEW_VER} from commit ${{ github.sha }}"
+            git push origin master
+          fi
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.AUTOBUILD_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          NEW_VER="${{ steps.build_step.outputs.version }}"
+          IS_PRERELEASE="${{ steps.build_step.outputs.is_prerelease }}"
+          TITLE="${{ steps.build_step.outputs.release_title }}"
+          CHANNEL="${{ steps.build_step.outputs.channel }}"
+
+          PRERELEASE_FLAG=""
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          if gh release view "v${NEW_VER}" --repo NobodySan97/tch-nginx-gui >/dev/null 2>&1; then
+            echo "Release v${NEW_VER} already exists."
+          else
+            echo "Creating GitHub Release v${NEW_VER} (channel: ${CHANNEL})..."
+            RELEASE_FILES=()
+            if [ "$CHANNEL" = "preview" ]; then
+              RELEASE_FILES+=("gui-dev-build-auto/GUI_preview.tar.bz2#GUI_preview.tar.bz2")
+            elif [ "$CHANNEL" = "dev" ]; then
+              RELEASE_FILES+=("gui-dev-build-auto/GUI_dev.tar.bz2#GUI_dev.tar.bz2")
+            else
+              RELEASE_FILES+=("gui-dev-build-auto/GUI.tar.bz2#GUI.tar.bz2")
+            fi
+
+            gh release create "v${NEW_VER}" \
+              "${RELEASE_FILES[@]}" \
+              --repo NobodySan97/tch-nginx-gui \
+              --title "$TITLE" \
+              $PRERELEASE_FLAG \
+              --generate-notes
+          fi

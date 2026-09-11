@@ -7,9 +7,10 @@ local ngx = ngx
 local session = ngx.ctx.session
 local format = string.format
 local ui_helper = require("web.ui_helper")
+local content_helper = require("web.content_helper")
 local proxy = require("datamodel")
 local modalPath = "/modals/system-modal.lp"
-syslog_present = "disabled"
+local syslog_present = "disabled"
 
 -- Check availability of file, return true if found, else false
 local function file_check(file_name)
@@ -22,7 +23,7 @@ local function file_check(file_name)
 end
 
 local Syslog = proxy.get("uci.system.system.@system[0].log_ip", "uci.system.system.@system[0].log_filter_ip")
-if Syslog and (Syslog[1].value ~= "" or Syslog[2].value ~= "") then
+if Syslog and ((Syslog[1] and Syslog[1].value ~= "") or (Syslog[2] and Syslog[2].value ~= "")) then
     syslog_present = "enabled"
 end
 
@@ -37,12 +38,30 @@ local syslog_light_map = {
 }
 
 local ssh_enable = "disabled"
-local dbvalues = proxy.get("uci.dropbear.dropbear.")
-if dbvalues then
-  for _, v in ipairs(dbvalues) do
-    if v.param == "enable" and v.value == "1" then
+local dbpath = "uci.dropbear.dropbear."
+local dbvalues = proxy.get(dbpath)
+local data = content_helper.convertResultToObject(dbpath, dbvalues)
+
+if type(data) == "table" and next(data) ~= nil then
+  for _, v in pairs(data) do
+    if v.enable == "1" or (v.enable ~= "0" and (v.Port or v.Interface or v.PasswordAuth or v.RootPasswordAuth)) then
       ssh_enable = "enabled"
       break
+    end
+  end
+else
+  local dropbear_res = proxy.get(
+    "uci.dropbear.dropbear.@dropbear[0].enable",
+    "uci.dropbear.dropbear.@lan.enable",
+    "uci.dropbear.dropbear.@wan.enable",
+    "uci.dropbear.dropbear.@afg.enable"
+  )
+  if dropbear_res then
+    for _, item in ipairs(dropbear_res) do
+      if item.value == "1" then
+        ssh_enable = "enabled"
+        break
+      end
     end
   end
 end

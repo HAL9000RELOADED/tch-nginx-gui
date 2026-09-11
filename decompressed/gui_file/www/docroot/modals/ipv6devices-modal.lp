@@ -103,19 +103,22 @@ local devices_filter = function(data)
   content_helper.getExactContent(IPv6Details)
   data["ipv6defaultgateway"] = IPv6Details.IPv6DefaultGW_lan
 
-  if data["L3Interface"] then
-    local mac = untaint(data["MACAddress"])
-    local cmd = "ip -6 neigh show | grep "..mac.." | grep fe80 "
-    local output =  network.executeCommand(cmd)
-    for i in gmatch(output, "%S+") do
-      if match(i, "fe80*") then
-        data["ipv6linklocaladdr"] = i
-        return true
-      else
-        return false
+  if data["L3Interface"] and data["MACAddress"] then
+    local mac = tostring(data["MACAddress"]):match("^([%x:]+)$")
+    if mac and #mac >= 6 then
+      local cmd = "ip -6 neigh show | grep -i '" .. mac .. "' | grep -i 'fe80'"
+      local output = network.executeCommand(cmd)
+      if output then
+        for i in gmatch(output, "%S+") do
+          if match(i, "^fe80") then
+            data["ipv6linklocaladdr"] = i
+            break
+          end
+        end
       end
     end
   end
+  return true
 end
 
 local devices_data, devices_helpmsg = post_helper.handleTableQuery(devices_columns, devices_options, devices_filter , nil, device_valid)

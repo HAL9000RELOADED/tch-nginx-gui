@@ -31,24 +31,24 @@ local voip_password_profile_2 = "uci.mmpbxrvsipnet.profile.@sip_profile_1.passwo
 local voip_password_profile_3 = "uci.mmpbxrvsipnet.profile.@sip_profile_2.password"
 
 if proxy.get(voip_password_profile_1) and proxy.get(voip_password_profile_1)[1].value then
-    voip_password_profile_1 = proxy.get(voip_password_profile_1)[1].value
+    local _p1 = proxy.get(voip_password_profile_1); voip_password_profile_1 = (_p1 and _p1[1] and _p1[1].value) or ""
 else
     voip_password_profile_1 = nil
 end
 
 if proxy.get(voip_password_profile_2) and proxy.get(voip_password_profile_2)[1].value then
-    voip_password_profile_2 = proxy.get(voip_password_profile_2)[1].value
+    local _p2 = proxy.get(voip_password_profile_2); voip_password_profile_2 = (_p2 and _p2[1] and _p2[1].value) or ""
 else
     voip_password_profile_2 = nil
 end
 
 if proxy.get(voip_password_profile_3) and proxy.get(voip_password_profile_3)[1].value then
-    voip_password_profile_3 = proxy.get(voip_password_profile_3)[1].value
+    local _p3 = proxy.get(voip_password_profile_3); voip_password_profile_3 = (_p3 and _p3[1] and _p3[1].value) or ""
 else
     voip_password_profile_3 = nil
 end
 
-local variant = proxy.get("uci.env.var.prod_friendly_name")[1].value or ""
+local _var = proxy.get("uci.env.var.prod_friendly_name"); local variant = (_var and _var[1] and _var[1].value) or ""
 
 -- Retrieving emission state
 local emission_content = {
@@ -374,7 +374,7 @@ ngx.print('\
 	
 	if content and content["mmpbx_enabled"] == "1" then
 		if session:hasAccess("/modals/mmpbx-dect-modal.lp") and
-				( variant == "Technicolor TG800vac" ) or ( variant == "Technicolor TG799vac" ) then
+				( ( variant == "Technicolor TG800vac" ) or ( variant == "Technicolor TG799vac" ) ) then
 			html[#html+1] = '<fieldset>'
 			html[#html+1] = '<legend>' .. T"DECT Emission" .. '</legend>'
 			if emission_state == "0" then

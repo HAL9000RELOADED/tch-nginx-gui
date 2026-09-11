@@ -22,18 +22,20 @@ local function getFile(file_name)
 end
 
 local function calculation(oldtable,file_content)
-  local lastnumber = oldtable.lastnumber
-  local period = oldtable.period
-  if file_content and lastnumber then
-    if(tonumber(file_content) < tonumber(lastnumber)) then
-      period = period +1
+  local lastnumber = oldtable and oldtable.lastnumber
+  local period = (oldtable and oldtable.period) or 0
+  local num_fc = tonumber(file_content)
+  local num_ln = tonumber(lastnumber)
+  if num_fc and num_ln then
+    if num_fc < num_ln then
+      period = (tonumber(period) or 0) + 1
     end
-    if tonumber(period) > 256 then
+    if (tonumber(period) or 0) > 256 then
       period = 0
     end
     oldtable = {period,file_content}
   else
-    oldtable = {0,file_content}
+    oldtable = {0,file_content or "0"}
   end
   return oldtable
 end
@@ -144,18 +146,11 @@ local function reCalculateContent()
 	local awls = content_helper.convertResultToObject(piface .. "@.", proxy.get(piface))
 	local wls = {}
 	for i,v in ipairs(awls) do
-			wls[#wls+1] = {
-				radio = v.device,
-				ssid = v.ssid,
-				iface = v.paramindex
-			}
-			if v.paramindex == getiface then
-				curiface = v.paramindex
-				if quantenna_wifi and curiface == "wl1" then
-					curiface = "eth5"
-				end
-				curssid = v.ssid
-			end
+		wls[#wls+1] = {
+			radio = v.device,
+			ssid = v.ssid,
+			iface = (quantenna_wifi and v.paramindex == "wl1") and "eth5" or v.paramindex
+		}
 	end
 	table.sort(wls, function(a,b)
 		if a.radio == b.radio then
@@ -165,18 +160,15 @@ local function reCalculateContent()
 		end
 	end)
 	local wifitx, wifirx = 0, 0
-	local content_wifi = {}
+	local batch_wifi = {}
 	for i,v in ipairs(wls) do
-		if proxy.get("sys.class.net.@" .. v.iface .. ".") then
-			if quantenna_wifi and v.iface == "wl1" then
-				v.iface = "eth5"
-			end
-			content_wifi["tx_bytes"] = "sys.class.net.@" .. v.iface .. ".statistics.tx_bytes"
-			content_wifi["rx_bytes"] = "sys.class.net.@" .. v.iface .. ".statistics.rx_bytes"
-			content_helper.getExactContent(content_wifi)
-			wifitx = wifitx + s2n(content_wifi.tx_bytes)
-			wifirx = wifirx + s2n(content_wifi.rx_bytes)
-		end 
+		batch_wifi["tx_" .. i] = "sys.class.net.@" .. v.iface .. ".statistics.tx_bytes"
+		batch_wifi["rx_" .. i] = "sys.class.net.@" .. v.iface .. ".statistics.rx_bytes"
+	end
+	content_helper.getExactContent(batch_wifi)
+	for i,v in ipairs(wls) do
+		wifitx = wifitx + s2n(batch_wifi["tx_" .. i])
+		wifirx = wifirx + s2n(batch_wifi["rx_" .. i])
 	end
 	
 	local content_common = {

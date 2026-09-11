@@ -4,18 +4,23 @@ local readfile = require("web.content_helper").readfile
 local post_helper = require("web.post_helper")
 local ngx = ngx
 
+local floor = math.floor
+
 local ram_data = proxy.get("sys.mem.RAMUsed")
 local ram = (ram_data and ram_data[1] and tonumber(ram_data[1].value)) or 0
+
 local cpu_data = proxy.get("sys.proc.CPUUsage")
 local cpu_usage = (cpu_data and cpu_data[1] and cpu_data[1].value) or "0"
 
+local loadavg_str = readfile("/proc/loadavg", "string")
+
 local data = {
-	cpuusage = cpu_usage .. "%" or "0",
-	ram_used = math.floor(ram / 1024),
-	uptime = post_helper.secondsToTime(readfile("/proc/uptime","number",floor)),
+	cpuusage = (cpu_usage and (cpu_usage .. "%")) or "0%",
+	ram_used = floor(ram / 1024),
+	uptime = post_helper.secondsToTime(readfile("/proc/uptime", "number", floor)),
 	connection = readfile("/proc/sys/net/netfilter/nf_conntrack_count"),
-	system_time = os.date("%d/%m/%Y %Hh:%Mm:%Ss",os.time()),
-	cpuload = readfile("/proc/loadavg","string"):sub(1,14),
+	system_time = os.date("%d/%m/%Y %Hh:%Mm:%Ss", os.time()),
+	cpuload = (loadavg_str and loadavg_str:sub(1, 14)) or "",
 }
 
 local buffer = {}

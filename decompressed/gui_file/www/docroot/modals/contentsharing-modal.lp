@@ -134,7 +134,8 @@ local function valid_fail(_, _, param)
 end
 
 local function valid_usb3_enabled(value, object)
-  local usb3_enabled_config = proxy.get("uci.system.config.enable_usb3_support")[1].value
+  local _u3 = proxy.get("uci.system.config.enable_usb3_support")
+local usb3_enabled_config = (_u3 and _u3[1] and _u3[1].value) or "0"
   if usb3_enabled_config == value or (usb3_enabled_config == "" and value == "1") then
     object.usb3_enabled = nil
   end
@@ -497,7 +498,7 @@ convertReceivedData(content_info)
 
 			if samba_available then
 				tinsert(html, "<fieldset><legend>" .. T"Attached Drive Info" .. "</legend>")
-				tinsert(html, format("<div><div id=\"connecteddevices\" class=\" simple-desc span3 monitor-changes\" data-ajaxrefresh=\"5\">%s</div>", content_info["connecteddevices"]))
+				tinsert(html, format("<div><div id=\"connecteddevices\" class=\" simple-desc span3 monitor-changes\" data-ajaxrefresh=\"5\">%s</div></div>", content_info["connecteddevices"]))
 				tinsert(html, ui_helper.createTable(usbdev_columms, usbpart_data, usbdev_options, nil, usbdev_helpmsg))
 				tinsert(html, "</fieldset>")
 			end

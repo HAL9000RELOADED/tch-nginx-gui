@@ -247,7 +247,7 @@ local content_wwan = {
 }
 content_helper.getExactContent(content_wwan)
 
-if content_wwan.ipaddr:len() ~= 0 then
+if content_wwan.ipaddr and content_wwan.ipaddr:len() ~= 0 then
   wan_intf = "wwan"
 end
 
@@ -263,13 +263,16 @@ content_helper.getExactContent(content)
 
 if content.fwversion then
     local version = content.fwversion
-    content.fwversion = sub(version, 1, find(version, "%-") - 1)
+    local dash_pos = find(version, "%-")
+    if dash_pos then
+        content.fwversion = sub(version, 1, dash_pos - 1)
+    end
 end
 
 local wan_type = "Ethernet"
-if find(content.wan_ll_intf, "atm_") == 1 then
+if content.wan_ll_intf and find(content.wan_ll_intf, "atm_") == 1 then
    wan_type = "ADSL"
-elseif find(content.wan_ll_intf, "ptm") == 1 then
+elseif content.wan_ll_intf and find(content.wan_ll_intf, "ptm") == 1 then
    wan_type = "VDSL"
 elseif wan_intf == "wwan" then
    wan_type = "Mobile"
@@ -285,16 +288,18 @@ if uri == "/wifi.lp" then
     if getargs.radio == "2.4" then
         radio = "radio_2G"
         wl = "wl0"
-		for _,tap in ipairs(proxy.getPN("uci.wireless.wifi-ap.", true)) do
-			if ( proxy.get(tap.path.."iface")[1].value == wl ) then
+		for _,tap in ipairs(proxy.getPN("uci.wireless.wifi-ap.", true) or {}) do
+			local iface_res = proxy.get(tap.path.."iface")
+			if iface_res and iface_res[1] and iface_res[1].value == wl then
 				ap = (tap.path:gsub("uci%.wireless%.wifi%-ap%.@",""):gsub("%.",""))
 			end
 		end
     else
         radio = "radio_5G"
         wl = "wl1"
-        for _,tap in ipairs(proxy.getPN("uci.wireless.wifi-ap.", true)) do
-			if ( proxy.get(tap.path.."iface")[1].value == wl ) then
+        for _,tap in ipairs(proxy.getPN("uci.wireless.wifi-ap.", true) or {}) do
+			local iface_res = proxy.get(tap.path.."iface")
+			if iface_res and iface_res[1] and iface_res[1].value == wl then
 				ap = (tap.path:gsub("uci%.wireless%.wifi%-ap%.@",""):gsub("%.",""))
 			end
 		end
@@ -361,11 +366,12 @@ if ((uri == "/wifi.lp") or (uri == "/wifiguest.lp")) then
     wifihtml[#wifihtml+1] = string.format('<div class="deviceinfo left">%s%s%s</div>', wifibase, wifisec, wifistate)
 else --in other pages, display both 2.4G and 5G info
     local wifibase, wifisec, wifistate,wifibase_5g, wifisec_5g, wifistate_5g, ap_5, ap_24
-	for _,tap in ipairs(proxy.getPN("uci.wireless.wifi-ap.", true)) do
-		if ( proxy.get(tap.path.."iface")[1].value == "wl0" ) then
+	for _,tap in ipairs(proxy.getPN("uci.wireless.wifi-ap.", true) or {}) do
+		local iface_res = proxy.get(tap.path.."iface")
+		if iface_res and iface_res[1] and iface_res[1].value == "wl0" then
 			ap_24 = (tap.path:gsub("uci%.wireless%.wifi%-ap%.@",""):gsub("%.",""))
 		end
-		if ( proxy.get(tap.path.."iface")[1].value == "wl1" ) then
+		if iface_res and iface_res[1] and iface_res[1].value == "wl1" then
 			ap_5 = (tap.path:gsub("uci%.wireless%.wifi%-ap%.@",""):gsub("%.",""))
 		end
 	end
