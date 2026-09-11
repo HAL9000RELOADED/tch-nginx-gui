@@ -371,6 +371,7 @@ local content = {
         activebank = "sys.banktable.activebank",
         passivebank = "sys.banktable.passivebank",
         bootedbank = "sys.banktable.booted",
+        fwversion_prefix = "uci.versioncusto.override.fwversion_prefix",
         activeversion = "sys.banktable.activeversion",
         passiveversion = "sys.banktable.passiveversion",
         rip_key_B = "rpc.system.modgui.utility.rip_key_B",
@@ -774,8 +775,10 @@ if content["bootedbank"] and content["bootedbank"] ~= "" then
         html[#html + 1] = ui_helper.createLabel(T"Booted Bank", content["bootedbank"] , basic)
 end
 html[#html + 1] = ui_helper.createLabel(T"Active Bank", content["activebank"] , basic)
-if content["activeversion"] == "Unknown" then
-        html[#html + 1] = ui_helper.createLabel(T"Active Version", T"Firmware not present in this bank (OBP Recovery Plan)" , long_basic)
+if content["activeversion"] == "Unknown" and content["fwversion_real"] and content["fwversion_real"] ~= "" then
+        html[#html + 1] = ui_helper.createLabel(T"Active Version", (content["fwversion_prefix"] or "") .. content["fwversion_real"] , long_basic)
+elseif content["activeversion"] == "Unknown" then
+        html[#html + 1] = ui_helper.createLabel(T"Active Version", T"Version unknown" , long_basic)
 else
         html[#html + 1] = ui_helper.createLabel(T"Active Version", content["activeversion"] , long_basic)
 end
