@@ -8954,3 +8954,16 @@ textarea:focus {
     transform: translate(-50%, -50%) !important;
   }
 }
+
+/* === Force correct 2-column info-card layout (stats page regression fix) === */
+#infocardrow {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+}
+#leftinfocard, #rightinfocard {
+  flex: 0 1 calc(50% - 20px) !important;
+  width: calc(50% - 20px) !important;
+  max-width: calc(50% - 20px) !important;
+  box-sizing: border-box !important;
+}
