@@ -8967,3 +8967,15 @@ textarea:focus {
   max-width: calc(50% - 20px) !important;
   box-sizing: border-box !important;
 }
+
+/* === Compact card sizing (reduce vertical scroll, user-requested 2026-09-11) === */
+.smallcard {
+  min-height: 190px !important;
+  margin-bottom: 16px !important;
+}
+.smallcard > .header {
+  padding: 10px 14px !important;
+}
+.infocard {
+  padding: 6px 0 6px 0 !important;
+}
