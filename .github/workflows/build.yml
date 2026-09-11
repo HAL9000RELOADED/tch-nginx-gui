@@ -1,0 +1,144 @@
+name: Build & Release GUI
+
+on:
+  push:
+    branches:
+      - master
+      - stable
+      - dev
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish / Update GitHub Release'
+        required: true
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build GUI Packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y bzip2 dos2unix zip python3
+
+      - name: Fix file line endings
+        run: |
+          echo "Scanning and normalizing line endings with dos2unix..."
+          find decompressed -type f -exec dos2unix -q {} +
+
+      - name: Determine version
+        id: version
+        run: |
+          SHORT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "dev")
+          echo "SHORT_HASH=${SHORT_HASH}" >> $GITHUB_ENV
+          
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VER="${GITHUB_REF_NAME#v}"
+            IS_TAG="true"
+          else
+            DEFAULT_VER=$(grep -oE 'version_gui=[0-9]+\.[0-9]+\.[0-9]+' decompressed/base/etc/init.d/rootdevice | cut -d= -f2 || echo "9.7.9")
+            VER="${DEFAULT_VER}"
+            IS_TAG="false"
+          fi
+          
+          FULL_VER="${VER}-${SHORT_HASH}"
+          echo "VERSION=${VER}" >> $GITHUB_ENV
+          echo "FULL_VER=${FULL_VER}" >> $GITHUB_ENV
+          echo "IS_TAG=${IS_TAG}" >> $GITHUB_ENV
+          echo "Building GUI version: ${FULL_VER}"
+
+      - name: Build DEV GUI package (.tar.bz2 & .zip)
+        run: |
+          chmod +x inizialize_gui.sh
+          VERSION="${VER}" ./inizialize_gui.sh dev
+
+      - name: Build STABLE GUI package (.tar.bz2 & .zip)
+        run: |
+          VERSION="${VER}" ./inizialize_gui.sh
+
+      - name: Generate Checksums
+        run: |
+          cd compressed
+          md5sum GUI*.tar.bz2 GUI*.zip > MD5SUMS
+          sha256sum GUI*.tar.bz2 GUI*.zip > SHA256SUMS
+          echo "=== MD5SUMS ==="
+          cat MD5SUMS
+          echo "=== SHA256SUMS ==="
+          cat SHA256SUMS
+
+      - name: Generate Release Notes & Changelog
+        run: |
+          python3 .github/scripts/generate_release_notes.py
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: gui-packages-${{ env.SHORT_HASH }}
+          path: |
+            compressed/GUI.tar.bz2
+            compressed/GUI.zip
+            compressed/GUI_dev.tar.bz2
+            compressed/GUI_dev.zip
+            compressed/MD5SUMS
+            compressed/SHA256SUMS
+            modular/*.tar.bz2
+          retention-days: 30
+
+      - name: Publish GitHub Release (Tags)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2.3.2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Technicolor Nginx GUI ${{ github.ref_name }}
+          body_path: release_notes.md
+          files: |
+            compressed/GUI.tar.bz2
+            compressed/GUI.zip
+            compressed/GUI_dev.tar.bz2
+            compressed/GUI_dev.zip
+            compressed/MD5SUMS
+            compressed/SHA256SUMS
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish/Update Rolling Dev Release
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == true)
+        uses: softprops/action-gh-release@v2.3.2
+        with:
+          tag_name: dev-latest
+          name: "Technicolor Nginx GUI ${{ env.FULL_VER }} (Dev)"
+          body_path: release_notes.md
+          files: |
+            compressed/GUI.tar.bz2
+            compressed/GUI.zip
+            compressed/GUI_dev.tar.bz2
+            compressed/GUI_dev.zip
+            compressed/MD5SUMS
+            compressed/SHA256SUMS
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

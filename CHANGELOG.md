@@ -2,6 +2,29 @@
 ---------------------------------------------------------------------------
 # Mainline 18.3 Cobalt
 
+9.7.9
+---------------------------------------------------------------------------
+- Card e Modale Eco completamente rinnovate con monitoraggio hardware e controlli avanzati
+- Monitoraggio termico in tempo reale: lettura sensori Wi-Fi 2.4 GHz (Broadcom), Wi-Fi 5 GHz (Quantenna RFIC/BBIC o Broadcom) e sensori SoC
+- Gestione CPU & Scaling Governor: selezione governor Linux (Interactive, Ondemand, Userspace), frequenze minime e massime (200 MHz - 1.0 GHz), controllo clock Broadcom e stato WFI (CPU Wait)
+- Controllo Cores CPU: opzione per disattivare il secondo core (CPU1) per il massimo risparmio energetico
+- Risparmio Energetico Ethernet: controllo avanzato di EEE (802.3az), AutoGrEEEn (SF2 Deep Green Mode), Auto Power Down (APD) e PHY Power Down
+- Ottimizzazione Memoria & VM: regolazione vm.swappiness (0-100), vm.vfs_cache_pressure (0-200), visualizzazione stato Swap e pulsante rapido per svuotare la cache RAM (drop_caches)
+- Aggiunta spiegazione chiara e dettagliata per ogni singola opzione all'interno del pannello Eco
+- Card Eco in Dashboard arricchita con frequenza/governor CPU live, temperature correnti e stato risparmio energetico
+- Personalizzazione footer con attribuzione al fork di ZioCook e aggiornamento link contributori
+
+9.7.8
+---------------------------------------------------------------------------
+- Modalità Bridge / Dumb AP Switch: card Banda Larga riprogettata con parametri di rete locale AP (IP, Subnet, Gateway, DNS, Lease DHCP) senza sezioni GPON/SFP superflue
+- Rilevazione sicura interfaccia SFP per prevenire errori quando non configurata
+- Correzione rilevazione ed estrazione dei server DNS attivi
+- Orchestrazione intelligente dei servizi (apply_service_modes.sh): arresto automatico dei demoni non necessari (pppd, firewall/NAT, CWMP, QoS, IGMP proxy, cupsd) al cambio modalità, con risparmio di oltre 50-70 MB di RAM
+- Gestione QoS: interruttore master ON/OFF nella card e nella modale con fallback a disciplina nativa Linux fq_codel a zero carico CPU
+- Gestione Wi-Fi Guest: controllo attivazione/disattivazione e visibilità dinamica delle reti guest (scompaiono dalla card del cruscotto e dalla modale quando disattivate)
+- Risoluzione problema OpenResty Lua con stringhe tainted ("tainted string") nei campi di configurazione e nelle tabelle di lookup
+- Pipeline CI/CD GitHub Actions per build automatica e rilascio pacchetti (tar.bz2 e zip)
+
 9.6.65
 ---------------------------------------------------------------------------
 - Fix vari che causavano la perdita delle configurazioni dopo un riavvio

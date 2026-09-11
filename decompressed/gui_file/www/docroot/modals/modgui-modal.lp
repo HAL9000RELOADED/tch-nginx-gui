@@ -92,11 +92,12 @@ end
 
 local function sendcmd(cmd)
         proxy.set("rpc.system.modgui.utility.sendcmd", cmd)
+        ngx.header.content_type = "application/json"
         ngx.print('{"success":"true"}')
         ngx.timer.at(0, function()
                 proxy.apply()
         end)
-        ngx.exit(ngx.HTTP_OK)
+        ngx.exit(ngx.OK)
 end
 
 local function upgradeguifile()
@@ -116,30 +117,46 @@ local function upgradeguifile()
         local dl = untaint(fwupgrade_location) .. filename
         local rcv_ok, rcv_errno, rcv_errmsg = receive_file(dl, 'name="upgradefile"')
         if rcv_ok then
+                ngx.header.content_type = "application/json"
                 ngx.print('{"success":"true"}')
-                ngx.exit(ngx.HTTP_OK)
+                ngx.exit(ngx.OK)
         else
+                ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+                ngx.header.content_type = "application/json"
                 ngx.print('{"error":"'..rcv_errmsg..'"}')
-                ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+                ngx.exit(ngx.OK)
         end
 end
 
 local function getSupportedModel()
 
-        local friendly_name = proxy.get("uci.env.var.prod_friendly_name")[1].value
-        local marketing_version = proxy.get("uci.version.version.@version[0].marketing_version")
-        local cputype = proxy.get("rpc.system.modgui.CPUtype")[1].value
-        if marketing_version then
-                marketing_version = tonumber(marketing_version[1].value:sub(1,4))
+        local friendly_name_data = proxy.get("uci.env.var.prod_friendly_name")
+        local friendly_name = friendly_name_data and friendly_name_data[1] and friendly_name_data[1].value or ""
+        local marketing_version_data = proxy.get("uci.version.version.@version[0].marketing_version")
+        local cputype_data = proxy.get("rpc.system.modgui.CPUtype")
+        local cputype = cputype_data and cputype_data[1] and cputype_data[1].value or ""
+
+        -- First check friendly_name: DGA4130, DGA4132, AGTHP, AGTEF are always DGA
+        if friendly_name:match("DGA413") or friendly_name:match("AGTHP") or friendly_name:match("AGTEF") then
+                return "DGA"
         end
 
-        if marketing_version < 16.3 then
+        if friendly_name:match("TG800") or friendly_name:match("DGA0130") then
+                return "TG800"
+        end
+
+        local m_ver = 0
+        if marketing_version_data and marketing_version_data[1] and marketing_version_data[1].value then
+                m_ver = tonumber(marketing_version_data[1].value:sub(1,4)) or 0
+        end
+
+        if m_ver >= 16.0 and m_ver < 16.3 then
                 if cputype:match("armv7l") then
                         return "TG789Xtream35B"
                 elseif cputype:match("mips") then
                         return "TG789"
                 end
-        elseif marketing_version < 18 then
+        elseif m_ver >= 16.3 and m_ver < 19.0 then
                 if cputype:match("armv7l") then
                         if friendly_name:match("TG800") then
                                 return "TG800"
@@ -149,12 +166,14 @@ local function getSupportedModel()
                 elseif cputype:match("mips") then
                         return "TG789"
                 end
-        elseif marketing_version < 19 then
+        elseif m_ver >= 19.0 or (m_ver >= 2.0 and m_ver < 10.0) then
                 if cputype:match("armv7l") then
                         return "DGA"
-                elseif cputype:match("mips") then
-                        return friendly_name --Unknown package
                 end
+        end
+
+        if cputype:match("mips") then
+                return "TG789"
         end
 
         return friendly_name --Unknown package
@@ -174,11 +193,14 @@ local function installspecificapp()
         local rcv_ok, rcv_errno, rcv_errmsg = receive_file(dl, 'name="specificapp_file"')
 
         if rcv_ok then
+                ngx.header.content_type = "application/json"
                 ngx.print('{"success":"true"}')
-                ngx.exit(ngx.HTTP_OK)
+                ngx.exit(ngx.OK)
         else
+                ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+                ngx.header.content_type = "application/json"
                 ngx.print('{"error":"'..rcv_errmsg..'"}')
-                ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+                ngx.exit(ngx.OK)
         end
 end
 
@@ -194,8 +216,10 @@ local function restoreFromSysupgradeBackup()
         if rcv_ok then
                 sendcmd("restoreSysupgradeBackup")
         else
+                ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+                ngx.header.content_type = "application/json"
                 ngx.print('{"error":"'..rcv_errmsg..'"}')
-                ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+                ngx.exit(ngx.OK)
         end
 end
 
@@ -220,7 +244,7 @@ local function genSysupgradeBackup()
                         os.remove("/tmp/"..filename)
 
                         -- and we're done
-                        ngx.exit(ngx.HTTP_OK)
+                        ngx.exit(ngx.OK)
                 end
         end
 
@@ -264,7 +288,7 @@ if ngx.req.get_method() == "POST" then
                 ngx.timer.at(0, function()
                         proxy.apply()
                 end)
-                ngx.exit(ngx.HTTP_OK)
+                ngx.exit(ngx.OK)
         end
         if action == "system_remove_root" then
                 return sendcmd("removeroot")
@@ -283,7 +307,7 @@ if ngx.req.get_method() == "POST" then
         end
         if action == "getVendor" then
                 ngx.print(call_popen(untaint("! grep -q " .. post_args.mac:gsub('_.*','') .. " /tmp/mac_cache && (curl -fksm 2 https://api.maclookup.app/v2/macs/" .. post_args.mac:gsub('_.*','') .. "/company/name >> /tmp/mac_cache && echo '|" .. post_args.mac:gsub('_.*','') .. "' >> /tmp/mac_cache); grep " .. post_args.mac:gsub('_.*','') .. " /tmp/mac_cache | cut -d'|' -f1"), "r"))
-                ngx.exit(ngx.HTTP_OK)
+                ngx.exit(ngx.OK)
                 return
         end
         if proxy.get("uci.web.sessionmgr.@default.force_https")[1].value ~= post_args.gui_forcehttps then
@@ -319,7 +343,7 @@ if ngx.req.get_method() == "POST" then
                         os.remove(fname)
 
                         -- and we're done
-                        ngx.exit(ngx.HTTP_OK)
+                        ngx.exit(ngx.OK)
                 else
                         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
                 end
@@ -497,7 +521,7 @@ html[#html + 1] = ui_helper.createSwitch(T"GUI Auto Update", "update_autoupgrade
 html[#html + 1] = ui_helper.createInputText(T"Update Hours", "update_autoupgrade_hour", modgui_settings["update_autoupgrade_hour"],autoupgrade_mon_1)
 if content["outdated_ver"] == "1" then
         html[#html + 1] = ui_helper.createLabel(T"State", T"Update Found", basic)
-        html[#html + 1] = ui_helper.createLabel(T"New Version", format("<a target=\"_blank\" href=https://github.com/Ansuel/tch-nginx-gui/releases/tag/%s>%s</a>", content["new_ver"], content["new_ver"]), basic)
+        html[#html + 1] = ui_helper.createLabel(T"New Version", format("<a target=\"_blank\" href=\"https://github.com/ZioCook/tch-nginx-gui/releases\">%s</a>", content["new_ver"]), basic)
         html[#html + 1] = ui_helper.createButton(T"Update GUI", T"Update", "icon-refresh", upgrade_gui)
 else
         html[#html + 1] = ui_helper.createLabel(T"State", T"No Update found", basic)
@@ -569,7 +593,7 @@ if content.specific_app ~= "" then
 
                 local device = getSupportedModel()
 
-                html[#html + 1] = ui_helper.createAlertBlock(format(T"If you don't have connection, specific app can be downloaded here ( https://raw.githubusercontent.com/Ansuel/gui-dev-build-auto/master/modular/upgrade-pack-specific%s.tar.bz2 ) and installed manually here.", device), info_box)
+                html[#html + 1] = ui_helper.createAlertBlock(format(T"If you don't have connection, specific app can be downloaded here ( https://github.com/ZioCook/tch-nginx-gui/releases/latest ) and installed manually here.", device), info_box)
                 html[#html + 1] = '<div class="control-group">'
                 html[#html + 1] = format('<label class="control-label">%s</label>', T"Upload Specific App")
                 html[#html + 1] = '<div class="controls">'

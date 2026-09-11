@@ -8,7 +8,7 @@ cpu_type="$(uname -m)"
 #  3rd arg : raw or normal. Raw is used to download specific file from specific dir
 #  4th arg : addtional command to append to setup.sh (usefull if setup.sh contains also uninstall command)
 install_from_github() {
-  mkdir "/tmp/$2"
+  mkdir -p "/tmp/$2"
 
   if [ "$3" = "specificapp" ]; then
     if [ ! -f "/tmp/$2.tar.bz2" ]; then
@@ -18,12 +18,13 @@ install_from_github() {
       fi
       curl -sLk "https://raw.githubusercontent.com/$1/$2.tar.bz2" --output "/tmp/$2.tar.bz2"
     fi
-    if [ ! -f "/tmp/$2.tar.bz2" ]; then
+    if [ ! -f "/tmp/$2.tar.bz2" ] || [ ! -s "/tmp/$2.tar.bz2" ] || grep -q "404: Not Found" "/tmp/$2.tar.bz2" 2>/dev/null; then
+      rm -f "/tmp/$2.tar.bz2"
       echo "Error installing App: Cannot find/download  $2.tar.bz2"
       return 1
     fi
     bzcat "/tmp/$2.tar.bz2" | tar -C "/tmp/$2" -xf -
-    rm "/tmp/$2.tar.bz2"
+    rm -f "/tmp/$2.tar.bz2"
     cd "/tmp/$2" || return 1
   else
     if [ ! -f "/tmp/$2.tar.gz" ]; then
@@ -38,12 +39,14 @@ install_from_github() {
       return 1
     fi
     tar -xzf "/tmp/$2.tar.gz" -C "/tmp/$2"
-    rm "/tmp/$2.tar.gz"
-    cd /tmp/"$2"/*
+    rm -f "/tmp/$2.tar.gz"
+    cd /tmp/"$2"/* || return 1
   fi
 
-  chmod +x ./setup.sh
-  ./setup.sh "$4"
+  if [ -f ./setup.sh ]; then
+    chmod +x ./setup.sh
+    ./setup.sh "$4"
+  fi
   rm -rf "/tmp/$2"
 }
 
@@ -71,7 +74,7 @@ app_transmission() {
         echo 'last_usb=$(ls -t /dev/sd* | tail -n 1)'
         echo 'last_usb=${last_usb#"/dev/"}'
         echo 'usb_count=$(find /tmp/run/mountd/ -mindepth 1 -maxdepth 1 -type d | wc -l)'
-        echo '[ "$usb_count" == "0" ] && /etc/init.d/transmission stop || [ -d "/tmp/run/mountd/$last_usb/sharing/config/transmission" ] && /etc/init.d/transmission restart'
+        echo '[ "$usb_count" = "0" ] && /etc/init.d/transmission stop || [ -d "/tmp/run/mountd/$last_usb/sharing/config/transmission" ] && /etc/init.d/transmission restart'
     } >/etc/hotplug.d/usb/60-transmission
 
     cp -r /usr/share/transmission /www/docroot/
@@ -87,7 +90,7 @@ app_transmission() {
       [ "$cpu_type" = "armv7l" ] && install_from_github FrancYescO/sharing_tg789 transmission-xtream
       [ "$cpu_type" = "mips" ] && install_from_github FrancYescO/sharing_tg789 transmission
       ;;
-    "16."* | "17."* | "18."* | "19."*)
+    "16."* | "17."* | "18."* | "19."* | "2."*)
       [ "$cpu_type" = "armv7l" ] && install_arm
       [ "$cpu_type" = "mips" ] && install_from_github FrancYescO/sharing_tg789 transmission
       ;;
@@ -182,14 +185,20 @@ app_luci() {
       opkg update
       [ ! -f /rom/usr/lib/libjson-c.so.2 ] && ln -s /usr/lib/libjson-c.so.4 /usr/lib/libjson-c.so.2 #workaround for 18.x feeds used on 19.x firmware
       rm -rf /etc/config/uhttpd
-      rm /usr/lib/lua/uci.so #remove to avoid lua-uci conflict during install
+      [ -f /usr/lib/lua/uci.so ] && cp /usr/lib/lua/uci.so /tmp/uci.so.bak
+      rm -f /usr/lib/lua/uci.so #remove to avoid lua-uci conflict during install
       opkg install --force-reinstall libuci-lua luci rpcd
       [ ! -f /etc/init.d/uhttpd ] && opkg install uhttpd # only on 19.x is not getting installed as dependency?
-      mkdir /www_luci
-      mv /www/cgi-bin /www_luci/
-      mv /www/luci-static /www_luci/
-      mv /www/index.html /www_luci/
-      cp /rom/usr/lib/lua/uci.so /usr/lib/lua/ #restore lib as it gets removed by libuci-lua
+      [ -d /www ] && mkdir -p /www_luci
+      [ -d /www/cgi-bin ] && mv /www/cgi-bin /www_luci/
+      [ -d /www/luci-static ] && mv /www/luci-static /www_luci/
+      [ -f /www/index.html ] && mv /www/index.html /www_luci/
+      if [ -f /rom/usr/lib/lua/uci.so ]; then
+        cp /rom/usr/lib/lua/uci.so /usr/lib/lua/
+      elif [ -f /tmp/uci.so.bak ]; then
+        cp /tmp/uci.so.bak /usr/lib/lua/
+      fi
+      rm -f /tmp/uci.so.bak
       sed -i 's/require "uci"/require "uci_luci"/g' /usr/lib/lua/luci/model/uci.lua #modify luci to load his original lib with different name
 
       if [ ! "$(uci get uhttpd.main.listen_http | grep 9080)" ]; then
@@ -227,7 +236,7 @@ app_luci() {
       }
       [ "$cpu_type" = "mips" ] && luci_install_mips
       ;;
-    "18."* | "19."*)
+    "18."* | "19."* | "2."*)
       [ "$cpu_type" = "armv7l" ] && luci_install_arm
       [ "$cpu_type" = "mips" ] && luci_install_mips
       ;;
@@ -355,7 +364,7 @@ app_aria2() {
       [ "$cpu_type" = "armv7l" ] && install_from_github FrancYescO/sharing_tg789 aria2-xtream
       [ "$cpu_type" = "mips" ] && install_from_github FrancYescO/sharing_tg789 aria2
       ;;
-    "16."* | "17."* | "18."* | "19."*)
+    "16."* | "17."* | "18."* | "19."* | "2."*)
       [ "$cpu_type" = "armv7l" ] && install_arm
       [ "$cpu_type" = "mips" ] && install_from_github FrancYescO/sharing_tg789 aria2
       ;;
@@ -529,9 +538,10 @@ app_xupnp() {
 install_specific_files() {
 
   install() {
-    install_from_github Ansuel/gui-dev-build-auto/master/modular "upgrade-pack-specific$1" specificapp
+    install_from_github ZioCook/tch-nginx-gui/master/modular "upgrade-pack-specific$1" specificapp ||
+      install_from_github Ansuel/gui-dev-build-auto/master/modular "upgrade-pack-specific$1" specificapp
     uci set modgui.app.specific_app=1
-    uci commit
+    uci commit modgui
   }
   remove() {
     echo "Specific files cannot be removed. Reset the router instead."

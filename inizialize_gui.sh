@@ -17,18 +17,18 @@ declare -a modular_dir=(
 	"ledfw_support-specificDGA4131"
 )
 
-if [ "$1" == "dev" ]; then
+if [ "$1" = "dev" ]; then
 	echo "Dev build detected"
 	type="_dev"
 fi
 
-if [ "$CI" == "true" ]; then
-	TYPE="$(cat $HOME/gui_build/data/type)"
-	if [ $TYPE == "PREVIEW" ]; then
+if [ "$CI" = "true" ] && [ -f "$HOME/gui_build/data/type" ]; then
+	TYPE="$(cat "$HOME/gui_build/data/type")"
+	if [ "$TYPE" = "PREVIEW" ]; then
 		type="_preview"
-	elif [ $TYPE == "DEV" ]; then
+	elif [ "$TYPE" = "DEV" ]; then
 		type="_dev"
-	elif [ $TYPE != "STABLE" ]; then
+	elif [ -n "$TYPE" ] && [ "$TYPE" != "STABLE" ]; then
 		type="_"$TYPE
 	fi
 fi
@@ -37,32 +37,34 @@ mkdir tar_tmp
 
 for index in "${modular_dir[@]}"; do
 
-	if [ "$CI" == "true" ] && [ -f $HOME/gui-dev-build-auto/modular/$index.tar.bz2 ]; then
+	if [ "$CI" = "true" ] && [ -f $HOME/gui-dev-build-auto/modular/$index.tar.bz2 ]; then
 		old_md5=$(md5sum <(bzcat $HOME/gui-dev-build-auto/modular/$index.tar.bz2) | awk '{print $1}')
 	fi
 
 	cd decompressed/$index
 
 	#Creating md5sum file for status led eventing
-	if [[ $index == "gui_file" ]]; then
+	if [ "$index" = "gui_file" ]; then
 		md5sum tmp/status-led-eventing.lua_new > tmp/status-led-eventing.md5sum
 	fi
 
 	#Creating md5sum for every ledfw_support modular dir
-	if [[ $index == *"ledfw_support"* ]]; then
-		md5sum etc/ledfw/stateMachines.lua > stateMachines.md5sum
-	fi
+	case "$index" in
+		*ledfw_support*)
+			md5sum etc/ledfw/stateMachines.lua > stateMachines.md5sum
+			;;
+	esac
 
 	BZIP2=-9 tar --mtime='2018-01-01' -cjf ../../tar_tmp/$index.tar.bz2 * --owner=0 --group=0
 	cd ../../
 	new_md5=$(md5sum <(bzcat tar_tmp/$index.tar.bz2) | awk '{print $1}')
 	if [ -z "$old_md5" ] || [ "$old_md5" != "$new_md5" ]; then
 		echo "Changes detected in modular package $index, updating..."
-		cp tar_tmp/$index.tar.bz2 $HOME/gui-dev-build-auto/modular/
+		[ -d "$HOME/gui-dev-build-auto/modular" ] && cp tar_tmp/$index.tar.bz2 "$HOME/gui-dev-build-auto/modular/"
 	fi
+	mkdir -p modular
+	cp tar_tmp/$index.tar.bz2 modular/
 done
-
-rm -r tar_tmp
 
 echo "Creating GUI dir"
 
@@ -84,14 +86,38 @@ fi
 
 for index in "${modular_dir[@]}"; do
 
-	if [ $index == "base" ] || [ $index == "gui_file" ] || [ $index == "traffic_mon" ]; then
+	if [ "$index" = "base" ] || [ "$index" = "gui_file" ] || [ "$index" = "traffic_mon" ]; then
 		echo "Copying file from "$index" to GUI dir"
 		cp -dr decompressed/$index/* total
 	elif [ -z "$(echo $index | grep upgrade-pack-)" ]; then
-		cp $HOME/gui-dev-build-auto/modular/$index.tar.bz2 total/tmp
+		if [ -f "$HOME/gui-dev-build-auto/modular/$index.tar.bz2" ]; then
+			cp "$HOME/gui-dev-build-auto/modular/$index.tar.bz2" total/tmp
+		elif [ -f "tar_tmp/$index.tar.bz2" ]; then
+			cp "tar_tmp/$index.tar.bz2" total/tmp
+		fi
 		echo "Adding specific file from "$index" to tmp virtual dir"
 	fi
 done
 
-cd total && BZIP2=-9 tar -cjf ../compressed/GUI$type.tar.bz2 * --owner=0 --group=0
+[ -d tar_tmp ] && rm -r tar_tmp
+
+# Inject build version into rootdevice
+short_commit=$(git rev-parse --short HEAD 2>/dev/null || echo "dev")
+build_ver="${VERSION:-9.7.9}"
+# If VERSION already contains a hyphen/commit hash, do not append short_commit again
+if [[ "$build_ver" =~ -[0-9a-fA-F]{7,8}$ ]] || [[ "$build_ver" =~ -dev$ ]]; then
+	stamp_ver="$build_ver"
+else
+	stamp_ver="$build_ver-$short_commit"
+fi
+echo "Stamping GUI version $stamp_ver..."
+if [ -f total/etc/init.d/rootdevice ]; then
+	sed -i "s#version_gui=.*#version_gui=$stamp_ver#" total/etc/init.d/rootdevice
+fi
+
+cd total
+BZIP2=-9 tar -cjf ../compressed/GUI$type.tar.bz2 * --owner=0 --group=0
+if command -v zip >/dev/null 2>&1; then
+	zip -q -r -9 ../compressed/GUI$type.zip *
+fi
 cd ../
